@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Missile Command Enhanced</title>
+    <title>Iron Dome Enhanced</title>
     <style>
         * {
             margin: 0;
@@ -104,36 +104,36 @@
 </head>
 <body>
     <div>
-        <h1>Missile Command Enhanced</h1>
+        <h1>Iron Dome Enhanced</h1>
         <div class="game-container">
             <canvas width="800" height="600"></canvas>
             <div class="crosshair"></div>
             
             <div id="splash-screen">
-                <h2>Missile Command Enhanced</h2>
-                <p>¡Defiende tus ciudades de la lluvia de misiles enemigos!</p>
-                <p>Mueve el ratón para apuntar y haz click para lanzar un misil de defensa.</p>
-                <p>Cada batería tiene misiles limitados, ¡úsalos con estrategia!</p>
-                <p class="click-to-start">Haz click en cualquier lugar para empezar</p>
+                <h2>Iron Dome Enhanced</h2>
+                <p>Defend your cities from the enemy missile rain!</p>
+                <p>Move the mouse to aim and click to launch a defensive missile.</p>
+                <p>Each battery has limited missiles, use them strategically!</p>
+                <p>Press 'S' to toggle sound ON/OFF.</p>
+                <p class="click-to-start">Click anywhere to start</p>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Missile Command Enhanced
+        // Iron Dome Enhanced
         const missileCommand = (function() {
             const canvas = document.querySelector('canvas');
             const ctx = canvas.getContext('2d');
             const gameContainer = document.querySelector('.game-container');
             const crosshair = document.querySelector('.crosshair');
-            const splashScreen = document.getElementById('splash-screen'); // Referencia a la pantalla de inicio
+            const splashScreen = document.getElementById('splash-screen');
 
             // Constants
             const CANVAS_WIDTH = 800;
             const CANVAS_HEIGHT = 600;
             const GROUND_HEIGHT = 100; // Fixed ground height
-            const WAVES_PER_LEVEL = 10; // Cada nivel tendrá 10 oleadas
+            const WAVES_PER_LEVEL = 10; // Each level will have 10 waves
 
             const MISSILE = {
                 active: 1,
@@ -151,6 +151,7 @@
             let enemyMissiles = [];
             let timerID;
             let gameStarted = false;
+            let soundEnabled = false; // Inicialmente deshabilitado
 
             let currentWave = 0;
             let waveActive = false;
@@ -162,11 +163,12 @@
             const smoothingFactor = 0.15;
             
             let bonusMissilesForNextWave = 0;
+            let planesShotDownThisLevel = 0; // NUEVO: Contador de aviones derribados en el nivel actual
 
-            // Avión Enemigo
+            // Enemy Plane
             let enemyPlane = null;
-            let planesPerLevel = 0; // Contador de aviones que han aparecido en el nivel actual
-            const MAX_PLANES_PER_LEVEL = 5; // Máximo de aviones por nivel
+            let planesPerLevel = 0; // Counter for planes that have appeared in the current level
+            const MAX_PLANES_PER_LEVEL = 10; // Maximum planes per level
 
             // Initialize game
             function initialize() {
@@ -174,7 +176,7 @@
                 canvas.width = CANVAS_WIDTH;
                 canvas.height = CANVAS_HEIGHT;
 
-                // Reiniciar el estado del juego para un nuevo juego
+                // Reset game state for a new game
                 cities = [];
                 antiMissileBatteries = [];
                 playerMissiles = [];
@@ -184,9 +186,10 @@
                 currentWave = 0;
                 waveActive = false;
                 gameStarted = false;
-                bonusMissilesForNextWave = 0; // Resetear la bonificación al inicio del juego
-                enemyPlane = null; // Reiniciar el avión
-                planesPerLevel = 0; // Reiniciar contador de aviones
+                bonusMissilesForNextWave = 0; // Reset bonus at game start
+                enemyPlane = null; // Reset plane
+                planesPerLevel = 0; // Reset plane counter
+                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados
 
                 // Create cities
                 cities.push(new City(100, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
@@ -206,13 +209,29 @@
                 // Do NOT call initializeLevel or startLevel here. It will be called after splash screen click.
             }
 
+            // Setup event listeners
+            function setupListeners() {
+                splashScreen.addEventListener('click', () => {
+                    if (!gameStarted) {
+                        splashScreen.style.display = 'none';
+                        gameStarted = true;
+                        initializeLevel();
+                        gameContainer.addEventListener('click', handleShoot);
+                        gameContainer.addEventListener('mousemove', handleMouseMove);
+                        crosshair.style.display = 'block';
+                    }
+                });
+                document.addEventListener('keydown', handleKeyPress);
+            }
+
             // Initialize level
             function initializeLevel() {
                 playerMissiles = [];
                 enemyMissiles = [];
                 currentWave = 0; 
-                enemyPlane = null; // Asegurarse de que no haya un avión activo al inicio de un nivel
-                planesPerLevel = 0; // Resetear el contador de aviones por nivel
+                enemyPlane = null; // Ensure no active plane at level start
+                planesPerLevel = 0; // Reset plane counter per level
+                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados por nivel
                 startNextWave(); 
             }
 
@@ -234,17 +253,17 @@
 
                 const reductionPerTwoWaves = Math.floor((currentWave - 1) / 2);
                 antiMissileBatteries.forEach(amb => {
-                    // Solo recarga los misiles si la batería está activa
+                    // Only reload missiles if the battery is active
                     if (amb.active) { 
                         amb.missilesLeft = Math.max(0, missilesForThisWave - reductionPerTwoWaves); 
                     } else {
-                        amb.missilesLeft = 0; // Asegurarse de que no tenga misiles si está destruida
+                        amb.missilesLeft = 0; // Ensure no missiles if destroyed
                     }
                 });
 
                 waveActive = true;
                 createEnemyMissiles();
-                // Llama a spawnEnemyPlane después de crear los misiles, para que aparezca entre oleadas
+                // Call spawnEnemyPlane after creating missiles, so it appears between waves
                 spawnEnemyPlane(); 
                 drawGameState(); 
                 startLevel(); 
@@ -556,12 +575,12 @@
                     this.missilesLeft = 10;
                     this.width = 40;
                     this.height = 30;
-                    this.active = true; // Agregada propiedad para saber si está activa
-                    this.health = 3;    // Agregada propiedad para la vida (3 impactos para destruir)
+                    this.active = true; // Added property to know if it's active
+                    this.health = 3;    // Added property for health (3 hits to destroy)
                 }
 
                 hasMissile() {
-                    return this.missilesLeft > 0 && this.active; // Solo puede disparar si está activa
+                    return this.missilesLeft > 0 && this.active; // Can only fire if active
                 }
 
                 draw() {
@@ -569,16 +588,16 @@
                     const baseY = this.y;
 
                     if (!this.active) {
-                        // Dibujar estado de destrucción (escombros)
-                        ctx.fillStyle = '#333'; // Escombros gris oscuro
-                        ctx.fillRect(baseX + 5, baseY - 5, this.width - 10, 10); // Base de escombros
-                        ctx.fillRect(baseX + 10, baseY - 15, this.width - 20, 10); // Parte superior de escombros
-                        ctx.fillStyle = '#111'; // Sombras más profundas
+                        // Draw destruction state (rubble)
+                        ctx.fillStyle = '#333'; // Dark gray rubble
+                        ctx.fillRect(baseX + 5, baseY - 5, this.width - 10, 10); // Rubble base
+                        ctx.fillRect(baseX + 10, baseY - 15, this.width - 20, 10); // Rubble top
+                        ctx.fillStyle = '#111'; // Deeper shadows
                         ctx.fillRect(baseX + 15, baseY - 8, 10, 5);
-                        return; // No dibujar las partes activas si está destruida
+                        return; // Do not draw active parts if destroyed
                     }
                     
-                    // Código de dibujo original para la batería activa
+                    // Original drawing code for active battery
                     ctx.fillStyle = '#8B4513';
                     ctx.fillRect(baseX, baseY - 5, this.width, 5);
 
@@ -631,9 +650,9 @@
                         ctx.fillText(`+${this.missilesLeft - maxSilos}`, this.x + 15, this.y - 15);
                     }
 
-                    // Dibujar indicador de salud si está dañada
+                    // Draw health indicator if damaged
                     if (this.health < 3 && this.active) {
-                        ctx.fillStyle = (this.health === 1) ? 'red' : 'orange'; // Rojo para 1 vida, Naranja para 2 vidas
+                        ctx.fillStyle = (this.health === 1) ? 'red' : 'orange'; // Red for 1 life, Orange for 2 lives
                         const barWidth = (this.health / 3) * this.width * 0.8;
                         ctx.fillRect(baseX + this.width * 0.1, baseY - this.height - 5, barWidth, 3);
                         ctx.strokeStyle = 'black';
@@ -721,20 +740,20 @@
                         if(this.groundExplosion) {
                             if(this.target && this.target[2] instanceof City) {
                                 this.target[2].active = false;
-                                // NEW: Verificar si todas las ciudades han sido destruidas inmediatamente
+                                // NEW: Check if all cities have been destroyed immediately
                                 checkAllCitiesDestroyed(); 
-                            } else if (this.target && this.target[2] instanceof AntiMissileBattery) { // El objetivo es una AntiMissileBattery
+                            } else if (this.target && this.target[2] instanceof AntiMissileBattery) { // Target is an AntiMissileBattery
                                 const targetBattery = this.target[2];
-                                if (targetBattery.active) { // Solo dañar si la batería está activa
+                                if (targetBattery.active) { // Only damage if battery is active
                                     targetBattery.health--;
                                     if (targetBattery.health <= 0) {
-                                        targetBattery.active = false; // Desactivar si se agota la vida
-                                        targetBattery.missilesLeft = 0; // No más misiles si está destruida
-                                        playSound('batteryDestroyed'); // Sonido opcional para batería destruida
-                                        console.log('¡Batería destruida!');
+                                        targetBattery.active = false; // Deactivate if health runs out
+                                        targetBattery.missilesLeft = 0; // No more missiles if destroyed
+                                        playSound('batteryDestroyed'); // Optional sound for destroyed battery
+                                        console.log('Battery destroyed!');
                                     } else {
-                                        // playSound('hit'); // Sonido opcional para impacto pero no destrucción
-                                        console.log(`¡Batería golpeada! Vida restante: ${targetBattery.health}`);
+                                        // playSound('hit'); // Optional sound for hit but not destroyed
+                                        console.log(`Battery hit! Health remaining: ${targetBattery.health}`);
                                     }
                                 }
                             }
@@ -878,14 +897,14 @@
                 constructor() {
                     this.width = 70;
                     this.height = 25;
-                    this.y = rand(50, CANVAS_HEIGHT / 3); // Altura aleatoria en el tercio superior
-                    this.speed = rand(2, 4) * (1 + level * 0.1); // Velocidad aleatoria, aumenta con el nivel
-                    this.direction = Math.random() < 0.5 ? 1 : -1; // 1 para derecha, -1 para izquierda
-                    this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width; // Empieza fuera de pantalla
+                    this.y = rand(50, CANVAS_HEIGHT / 3); // Random height in the upper third
+                    this.speed = rand(2, 4) * (1 + level * 0.1); // Random speed, increases with level
+                    this.direction = Math.random() < 0.5 ? 1 : -1; // 1 for right, -1 for left
+                    this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width; // Starts off-screen
                     this.active = true;
-                    this.missileLaunchCooldown = 60; // Frames entre lanzamientos de misiles
+                    this.missileLaunchCooldown = 60; // Frames between missile launches
                     this.currentMissileCooldown = rand(10, this.missileLaunchCooldown);
-                    this.missilesToLaunch = rand(1, 3); // Cantidad de misiles que lanzará
+                    this.missilesToLaunch = rand(1, 3); // Number of missiles to launch
                     this.exploded = false;
                     this.explodeRadius = 0;
                 }
@@ -893,7 +912,7 @@
                 draw() {
                     if (!this.active) {
                         if (this.exploded) {
-                            // Dibujar explosión del avión
+                            // Draw plane explosion
                             const gradient = ctx.createRadialGradient(
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
@@ -910,7 +929,7 @@
                         return;
                     }
 
-                    ctx.fillStyle = '#666'; // Cuerpo del avión
+                    ctx.fillStyle = '#666'; // Plane body
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - (this.direction * this.width * 0.7), this.y - this.height / 2);
@@ -921,7 +940,7 @@
                     ctx.closePath();
                     ctx.fill();
 
-                    // Alas
+                    // Wings
                     ctx.fillStyle = '#444';
                     ctx.beginPath();
                     ctx.moveTo(this.x - (this.direction * this.width * 0.4), this.y);
@@ -931,7 +950,7 @@
                     ctx.closePath();
                     ctx.fill();
                     
-                    // Cabina
+                    // Cockpit
                     ctx.fillStyle = '#0f0';
                     ctx.beginPath();
                     ctx.arc(this.x - (this.direction * this.width * 0.1), this.y, 5, 0, Math.PI * 2);
@@ -943,7 +962,7 @@
                         if (this.exploded) {
                             this.explodeRadius += 2;
                             if (this.explodeRadius > 80) {
-                                this.exploded = false; // Termina la animación de explosión
+                                this.exploded = false; // End explosion animation
                             }
                         }
                         return;
@@ -951,7 +970,7 @@
 
                     this.x += this.speed * this.direction;
 
-                    // Lanzar misiles
+                    // Launch missiles
                     if (this.missilesToLaunch > 0) {
                         this.currentMissileCooldown--;
                         if (this.currentMissileCooldown <= 0) {
@@ -961,11 +980,11 @@
                                 this.missilesToLaunch--;
                                 playSound('shoot');
                             }
-                            this.currentMissileCooldown = rand(30, this.missileLaunchCooldown); // Resetear cooldown
+                            this.currentMissileCooldown = rand(30, this.missileLaunchCooldown); // Reset cooldown
                         }
                     }
 
-                    // Remover avión si sale de la pantalla y ha terminado de lanzar misiles
+                    // Remove plane if it goes off-screen and has finished launching missiles
                     if (this.direction === 1 && this.x > CANVAS_WIDTH + this.width && this.missilesToLaunch <= 0) {
                         this.active = false;
                     } else if (this.direction === -1 && this.x < -this.width && this.missilesToLaunch <= 0) {
@@ -973,11 +992,13 @@
                     }
                 }
 
-                // Método para cuando el avión es golpeado
+                // Method for when the plane is hit
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 500 * getMultiplier(); // Bonificación por derribar el avión
+                    score += 500 * getMultiplier(); // Bonus for shooting down the plane (ya implementado)
+                    planesShotDownThisLevel++; // NUEVO: Incrementar el contador de aviones derribados
+                    checkPlaneReconstructionBonus(); // NUEVO: Verificar el bonus de reconstrucción
                     playSound('explosion');
                 }
             }
@@ -997,20 +1018,50 @@
                         }
                     });
 
-                    // Comprobar si la explosión del misil del jugador golpea el avión enemigo
+                    // Check if the player missile's explosion hits the enemy plane
                     if (enemyPlane && enemyPlane.active) {
                         const distanceToPlane = Math.sqrt(
                             Math.pow(missile.x - enemyPlane.x, 2) +
                             Math.pow(missile.y - enemyPlane.y, 2)
                         );
-                        // Aumenta un poco el radio de detección para el avión para que sea más fácil golpearlo
+                        // Slightly increase the detection radius for the plane to make it easier to hit
                         if (distanceToPlane < missile.explodeRadius + 20) { 
                             enemyPlane.hit();
-                            enemyPlane = null; // Remover el avión una vez golpeado
+                            enemyPlane = null; // Remove the plane once hit
                         }
                     }
                 }
             }
+
+            // NUEVO: Función para verificar el bonus de reconstrucción de avión
+            function checkPlaneReconstructionBonus() {
+                if (planesShotDownThisLevel >= 3) {
+                    reconstructRandomDestroyedStructure();
+                    planesShotDownThisLevel = 0; // Reiniciar el contador después del bonus
+                }
+            }
+
+            // NUEVO: Función para reconstruir una estructura aleatoria destruida
+            function reconstructRandomDestroyedStructure() {
+                const destroyedCities = cities.filter(city => !city.active);
+                const destroyedBatteries = antiMissileBatteries.filter(battery => !battery.active);
+
+                const allDestroyed = [...destroyedCities, ...destroyedBatteries];
+
+                if (allDestroyed.length > 0) {
+                    const structureToRebuild = allDestroyed[rand(0, allDestroyed.length - 1)];
+                    if (structureToRebuild instanceof City) {
+                        structureToRebuild.active = true;
+                        console.log("¡Ciudad reconstruida por derribar 3 aviones!");
+                    } else if (structureToRebuild instanceof AntiMissileBattery) {
+                        structureToRebuild.active = true;
+                        structureToRebuild.health = 3; // Restaurar salud completa
+                        structureToRebuild.missilesLeft = 10; // Recargar misiles
+                        console.log("¡Lanzadera reconstruida por derribar 3 aviones!");
+                    }
+                }
+            }
+
 
             // Get viable targets for enemy missiles
             function viableTargets() {
@@ -1022,9 +1073,8 @@
                     }
                 });
 
-                // Añadir lógica para que los aviones apunten a un número menor de objetivos si es necesario
-                // La diferencia es que los misiles de avión pueden ser más precisos o menos aleatorios.
-                // Por ahora, usamos la misma lógica que los misiles normales.
+                // Add logic for planes to aim at a smaller number of targets if needed
+                // For now, we use the same logic as normal missiles.
 
                 while(targets.length > 3) {
                     targets.splice(rand(0, targets.length - 1), 1);
@@ -1032,7 +1082,7 @@
 
                 if(Math.random() < (level * 0.05)) { 
                     antiMissileBatteries.forEach(amb => {
-                        // Solo atacar baterías activas
+                        // Only attack active batteries
                         if (amb.active) { 
                             targets.push([amb.x, amb.y - amb.height, amb]);
                         }
@@ -1050,11 +1100,11 @@
                 updatePlayerMissiles();
                 drawPlayerMissiles();
 
-                // Actualizar y dibujar el avión si está activo
+                // Update and draw the plane if active
                 if (enemyPlane && enemyPlane.active) {
                     enemyPlane.update();
                     enemyPlane.draw();
-                } else if (enemyPlane && enemyPlane.exploded) { // Dibujar la explosión del avión
+                } else if (enemyPlane && enemyPlane.exploded) { // Draw plane explosion
                     enemyPlane.update();
                     enemyPlane.draw();
                 }
@@ -1074,21 +1124,21 @@
 
             // Spawns an enemy plane
             function spawnEnemyPlane() {
-                // Posibilidad de que aparezca un avión, solo si no hay uno activo y no hemos alcanzado el límite por nivel
+                // Possibility for a plane to appear, only if no active one and we haven't reached the limit per level
                 if (!enemyPlane && planesPerLevel < MAX_PLANES_PER_LEVEL) {
-                    if (Math.random() < 0.3 + (level * 0.05)) { // 30% de probabilidad + 5% por nivel
+                    if (Math.random() < 0.3 + (level * 0.05)) { // 30% probability + 5% per level
                         setTimeout(() => {
                             enemyPlane = new EnemyPlane();
                             planesPerLevel++;
-                            console.log(`Avión enemigo apareciendo. Aviones en este nivel: ${planesPerLevel}`);
-                        }, rand(2000, 5000)); // Aparece después de 2-5 segundos
+                            console.log(`Enemy plane appearing. Planes this level: ${planesPerLevel}`);
+                        }, rand(2000, 5000)); // Appears after 2-5 seconds
                     }
                 }
             }
 
             // Check for end of level
             function checkEndLevel() {
-                // Considera el avión también para el fin de oleada/nivel
+                // Consider the plane as well for wave/level end
                 if(enemyMissiles.length === 0 && (!enemyPlane || !enemyPlane.active && !enemyPlane.exploded) && gameStarted && currentWave >= WAVES_PER_LEVEL) {
                     stopLevel();
                     gameContainer.removeEventListener('click', handleShoot);
@@ -1098,23 +1148,23 @@
                     const missilesLeft = totalMissilesLeft();
                     const citiesSaved = totalCitiesSaved();
 
-                    // La condición de game over por ciudades se mueve a checkAllCitiesDestroyed
+                    // The game over condition by cities is moved to checkAllCitiesDestroyed
                     if(citiesSaved === 0) {
-                        endGame(missilesLeft); // Esto debería ser unreachable si checkAllCitiesDestroyed funciona
+                        endGame(missilesLeft); // This should be unreachable if checkAllCitiesDestroyed works
                     } else {
                         endLevel(missilesLeft, citiesSaved);
                     }
                 }
             }
 
-            // NEW: Función para verificar si todas las ciudades han sido destruidas
+            // NEW: Function to check if all cities have been destroyed
             function checkAllCitiesDestroyed() {
                 if (totalCitiesSaved() === 0) {
-                    stopLevel(); // Detener el bucle del juego
-                    gameContainer.removeEventListener('click', handleShoot); // Desactivar el disparo
-                    gameContainer.removeEventListener('mousemove', handleMouseMove); // Desactivar el movimiento del crosshair
-                    crosshair.style.display = 'none'; // Ocultar el crosshair
-                    endGame(totalMissilesLeft()); // Terminar el juego
+                    stopLevel(); // Stop the game loop
+                    gameContainer.removeEventListener('click', handleShoot); // Deactivate shooting
+                    gameContainer.removeEventListener('mousemove', handleMouseMove); // Deactivate crosshair movement
+                    crosshair.style.display = 'none'; // Hide crosshair
+                    endGame(totalMissilesLeft()); // End the game
                 }
             }
 
@@ -1136,34 +1186,35 @@
 
             // Setup next level
             function setupNextLevel() {
-                const previousScore = score; // Guardar la puntuación antes de añadir bonificaciones de fin de nivel
+                const previousScore = score; // Save score before adding end-of-level bonuses
                 level++; 
-                planesPerLevel = 0; // Resetear el contador de aviones para el nuevo nivel
+                planesPerLevel = 0; // Reset plane counter for the new level
+                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados en el nuevo nivel
 
-                // LÓGICA DE RECOMPENSA DEL NIVEL 1 AL 2 (anterior)
-                // Se mantiene, pero la reconstrucción ahora se maneja por la nueva lógica de puntuación general.
-                if (level === 2 && totalCitiesSaved() === 6) { // Si todas las ciudades se salvaron en el nivel 1
+                // LEVEL 1 TO 2 REWARD LOGIC (previous)
+                // Maintained, but rebuilding is now handled by the new general score logic.
+                if (level === 2 && totalCitiesSaved() === 6) { // If all cities were saved in level 1
                     bonusMissilesForNextWave = 10; 
-                    console.log("¡10 misiles extra por batería para el Nivel 2 por salvar todas las ciudades!"); 
+                    console.log("10 extra missiles per battery for Level 2 for saving all cities!"); 
                 }
 
-                // NUEVA LÓGICA: Reconstruir una ciudad si la puntuación del nivel fue > 3000
-                if (previousScore >= 3000) { // Evalúa la puntuación del nivel ANTERIOR
+                // NEW LOGIC: Rebuild a city if level score was > 3000
+                if (previousScore >= 3000) { // Evaluates the score from the PREVIOUS level
                     const destroyedCities = cities.filter(city => !city.active);
                     if (destroyedCities.length > 0) {
                         const cityToRebuild = destroyedCities[rand(0, destroyedCities.length - 1)];
                         cityToRebuild.active = true;
-                        console.log("¡Ciudad reconstruida por alta puntuación!"); 
+                        console.log("City rebuilt due to high score!"); 
                     }
                 }
 
 
-                // Reconstruir y reparar todas las baterías para el nuevo nivel
+                // Rebuild and repair all batteries for the new level
                 antiMissileBatteries.forEach(amb => {
-                    amb.active = true; // Activar la batería
-                    amb.health = 3;    // Restaurar su salud completa
+                    amb.active = true; // Activate battery
+                    amb.health = 3;    // Restore full health
                 });
-                console.log("¡Lanzaderas reconstruidas y reparadas!"); 
+                console.log("Launchers rebuilt and repaired!"); 
 
                 initializeLevel(); 
                 gameContainer.addEventListener('click', handleShoot);
@@ -1188,7 +1239,7 @@
 
             // Get total missiles left
             function totalMissilesLeft() {
-                // Solo contar misiles de baterías activas
+                // Only count missiles from active batteries
                 return antiMissileBatteries.filter(amb => amb.active).reduce((total, amb) => total + amb.missilesLeft, 0);
             }
 
@@ -1236,7 +1287,7 @@
 
             // Determine which anti-missile battery to use
             function whichAntiMissileBattery(x) {
-                // Modificado para priorizar baterías activas
+                // Modified to prioritize active batteries
                 const getUsableBattery = (indices) => {
                     for (const index of indices) {
                         if (antiMissileBatteries[index].hasMissile()) {
@@ -1273,41 +1324,40 @@
                 playerShoot(event.clientX, event.clientY);
             }
 
-            // Setup event listeners
-            function setupListeners() {
-                // Event listener for the splash screen to start the game
-                splashScreen.addEventListener('click', function startInitialGame() {
-                    splashScreen.style.display = 'none'; // Hide splash screen
-                    crosshair.style.display = 'block'; // Show crosshair
-                    initializeLevel(); // Start the first level
-                    
-                    // Attach main game event listeners to gameContainer
-                    gameContainer.addEventListener('click', handleShoot);
-                    gameContainer.addEventListener('mousemove', handleMouseMove);
-
-                    // Remove this listener so it only fires once
-                    splashScreen.removeEventListener('click', startInitialGame);
-                });
+            // Toggle sound function for key press (button removed)
+            function toggleSound() {
+                soundEnabled = !soundEnabled;
+                const soundStatus = soundEnabled ? 'ON' : 'OFF';
+                console.log(`Sound: ${soundStatus}`);
+                // You might want to update the splash screen text here if it's visible,
+                // or provide some other visual feedback to the user.
             }
 
-            // Simple sound effects (añade sonidos si tienes los datos base64 para 'batteryDestroyed' y 'hit')
+            // Handle key press for sound toggle
+            function handleKeyPress(event) {
+                if (event.key === 's' || event.key === 'S') {
+                    toggleSound();
+                }
+            }
+
+            // Simple sound effects (add sounds if you have the base64 data for 'batteryDestroyed' and 'hit')
             function playSound(type) {
-                if(typeof Audio === 'undefined') return;
+                if(!soundEnabled || typeof Audio === 'undefined') return;
                 
                 try {
                     let sound;
                     switch(type) {
                         case 'shoot':
                             // Data for a short, sharp shooting sound
-                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAsC0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmSMAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAkB0AAJceAACZJQAAhCMAAH4dAABzIwAA4yoAADkuAACwLAAAsS0AALAtAACkKwAAqiwAAKgsAACzKgAAuywAAKEsAACaMAAAmS4AAK0vAACfMgAAqjQAAKk1AACdOwAA4i4AALkuAAC8LQAAtC4AAK0tAACjKwAAtS4AALQsAACeJwAAqSUAALQpAAC2JwAAwSkAAKEqAACxKwAAuCwAAKQvAACmMAAAoTEAAJA6AAA4OAAAtCkAAJ4uAACeLgAAoDAAAKw2AACeNQAAnDUAAKE0AACuMgAApzMAAKQ4AACQNgAAiTgAAF89AADvNwAAtigAAKEqAAC+LwAAqy8AAKMvAACnMQAAnjIAAKM0AACkNAAApDcAAKI4AACcOAAAnDUAAKE6AAA5PAAAsCkAAKMqAACoKwAAqiwAALQtAACyKwAAuywAAKovAACnKwAAqiwAAK0tAAC0LgAAty8AAKwxAAC0MgAAuDAAALEyAAC7MQAApDcAAKc1AACkNgAAtzgAALk6AACkNAAAqTQAALg0AAC2NwAAuDcAAKM5AAA2RAAA3DgAALMsAACnLgAAsi8AALcyAACqNAAApzIAALM0AACiNgAAgTMAAIo0AADYNAAArDQAAJgyAACbPgAA3DMAALKWAwAFBwYBAAAAAAAAAAAAAAAA');
+                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAkB0AAJceAACZJQAAhCMAAH4dAABzIwAA4yoAADkuAACwLAAAsS0AALAtAACkKwAAqiwAAKgsAACzKgAAuywAAKEsAACaMAAAmS4AAK0vAACfMgAAqjQAAKk1AACdOwAA4i4AALkuAAC8LQAAtC4AAK0tAACjKwAAtS4AAJ0sAACeJwAAqSUAALQpAAC2JwAAwSkAAKEqAACxKwAAuCwAAKQvAACmMAAAoTEAAJA6AAA4OAAAtCkAAJ4uAACeLgAAoDAAAKw2AACeNQAAnDUAAKE0AACuMgAApzMAAKQ4AACQNgAAiTgAAF89AADvNwAAtigAAKEqAAC+LwAAqy8AAKMvAACnMQAAnjIAAKM0AACkNAAApDcAAKI4AACcOAAAnDUAAKE6AAA5PAAAsCkAAKMqAACoKwAAqiwAALQtAACyKwAAuywAAKovAACnKwAAqiwAAK0tAAC0LgAAty8AAKwxAAC0MgAAuDAAALEyAAC7MQAApDcAAKc1AACkNgAAtzgAALk6AACkNAAAqTQAALg0AAC2NwAAuDcAAKM5AAA2RAAA3DgAALMsAACnLgAAsi8AALcyAACqNAAApzIAALM0AACiNgAAgTMAAIo0AADYNAAArDQAAJgyAACbPgAA3DMAALKWAwAFBwYBAAAAAAAAAAAAAAAA');
                             break;
                         case 'explosion':
                             // Data for an explosion sound
-                            sound = new Audio('data:audio/wav;base64,UklGRtIoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQjUKgAARCsAAEEiAACJIgAAgysAAJQuAACxPgAAs1QAAIE+AACYJgAA1i8AAD5PAACaOgAA3D8AANwxAAC3QAAA4D8AAPFCAAB9YQAADlQAAC9bAAC5gAAA6AAAAKjTAAAA6gAAAJXgAACj7gAAj8QAAPUoAABfOQAAQjYAAFE3AABdRAAA+icAAKMsAACdMQAA8DEAAFk9AACeKgAAjy8AAN45AADTNAAAozsAADs+AAC/PQAAnTsAAOQ3AACXNwAAjDUAAIk4AAA/NQAARzQAAKM3AAB/NgAARzsAAKA4AABwOQAA9DoAADs7AADTPAAAmzsAAMk4AACbMgAAmDMAACo3AACfMgAAqjkAAKgsAACrLAAAsisAAK0sAACzLgAAuS8AAKMxAACuMgAAuzIAAIE4AAC4NQAApzYAAKQ2AACgMAAAuSgAAKMtAAC2KwAAsSsAALQrAACrKgAAtS0AAKwsAACeKQAAoy8AAJ8wAACzMwAApzIAALk3AACoOgAAoywAAIA3AACuMQAAqikAAKcqAACbKAAAuigAAJ8nAACZKQAAjygAAJAoAACmKQAAmSkAAJsoAACmKAAAniQAAJ8lAACKJgAAkCEAAIAjAACAJQAAnCYAAKMnAACbKAAAmCcAAJgmAACZJAAAkCMASlZgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
+                            sound = new Audio('data:audio/wav;base64,UklGRtIoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQjUKgAARCsAAEEiAACJIgAAgysAAJQuAACxPgAAs1QAAIE+AACYJgAA1i8AAD5PAACaOgAA3D8AANwxAAC3QAAA4D8AAPFCAAB9YQAADlQAAC9bAAC5gAAA6AAAAKjTAAAA6gAAAJXgAACj7gAAj8QAAPUoAABfOQAAQjYAAFE3AABdRAAA+icAAKMsAACdMQAA8DEAAFk9AACeKgAAjy8AAN45AADTNAAAozsAADs+AAC/PQAAnTsAAOQ3AACXNwAAjDUAAIk4AAA/NQAARzQAAKM3AAB/NgAARzsAAKA4AABwOQAA9DoAADs7AADTPAAAmzsAAMk4AACbMgAAmDMAACo3AACfMgAAqjkAAKgsAACrLAAAsisAAK0sAACzLgAAuS8AAKMxAACuMgAAuzIAAIE4AAC4NQAApzYAAKQ2AACgMAAAuSgAAKMtAAC2KwAAsSsAALQrAACrKgAAuS0AAKwsAACeKQAAoy8AAJ8wAACzMwAApzIAALk3AACoOgAAoywAAIA3AACuMQAAqikAAKcqAACbKAAAuigAAJ8nAACZKQAAjygAAJAoAACmKQAAmSkAAJsoAACmKAAAniQAAJ8lAACKJgAAkCEAAIAjAACAJQAAnCYAAKMnAACbKAAAmCcAAJgmAACZJAAAkCMASlZgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
                             break;
                         case 'gameOver':
                             // Data for a game over sound (usually a low, sustained tone or a series of tones)
-                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAsC0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmSMAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAkB0AAJceAACZJQAAhCMAAH4dAABzIwAA4yoAADkuAACwLAAAsS0AALAtAACkKwAAqiwAAKgsAACzKgAAuywAAKEsAACaMAAAmS4AAK0vAACfMgAAqjQAAKk1AACdOwAA4i4AALkuAAC8LQAAtC4AAK0tAACjKwAAtS4AALQsAACeJwAAqSUAALQpAAC2JwAAwSkAAKEqAACxKwAAuCwAAKQvAACmMAAAoTEAAJA6AAA4OAAAtCkAAJ4uAACeLgAAoDAAAKw2AACeNQAAnDUAAKE0AACuMgAApzMAAKQ4AACQNgAAiTgAAF89AADvNwAAtigAAKEqAAC+LwAAqy8AAKMvAACnMQAAnjIAAKM0AACkNAAApDcAAKI4AACcOAAAnDUAAKE6AAA5PAAAsCkAAKMqAACoKwAAqiwAALQtAACyKwAAuywAAKovAACnKwAAqiwAAK0tAAC0LgAAty8AAKwxAAC0MgAAuDAAALEyAAC7MQAApDcAAKc1AACkNgAAtzgAALk6AACkNAAAqTQAALg0AAC2NwAAuDcAAKM5AAA2RAAA3DgAALMsAACnLgAAsi8AALcyAACqNAAApzIAALM0AACiNgAAgTMAAIo0AADYNAAArDQAAJgyAACbPgAA3DMAALKWAwAFBwYBAAAAAAAAAAAAAAAA');
+                            sound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
                             break;
                         case 'batteryDestroyed': // Opcional: Sonido para cuando una batería es destruida
                             // sound = new Audio('data:audio/wav;base64,...'); 
