@@ -438,7 +438,7 @@
             }
 
             // Draw end level screen
-            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneMissiles, stealthPlaneBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) { // Added killerPlaneImmunityActive
+            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthPlaneBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) { // Added killerPlaneImmunityActive
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -456,8 +456,8 @@
                 // NEW: Display planes shot down and structures rebuilt
                 ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, 240); // Adjusted Y
                 ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, 270); // Adjusted Y (Use reconstructedCount directly)
-                if (spyPlaneMissiles > 0) {
-                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneMissileBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, 300); // Adjusted Y
+                if (spyPlaneBonus > 0) { // Changed spyPlaneMissileBonus to spyPlaneBonus
+                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, 300); // Adjusted Y
                 }
                 if (stealthPlaneBonusActive) { // NEW: Display stealth plane bonus
                     ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, 330); // Adjusted Y
