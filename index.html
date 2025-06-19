@@ -96,6 +96,34 @@
             animation: pulse 1.5s infinite alternate; /* Animación de pulsación */
         }
 
+        /* Estilo para la pantalla de pausa */
+        #pause-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #0ff;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #pause-screen h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        #pause-screen p {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
         @keyframes pulse {
             from { opacity: 1; }
             to { opacity: 0.5; }
@@ -115,7 +143,21 @@
                 <p>Move the mouse to aim and click to launch a defensive missile.</p>
                 <p>Each battery has limited missiles, use them strategically!</p>
                 <p>Press 'S' to toggle sound ON/OFF.</p>
+                <p>Press 'P' to pause the game.</p>
+                <p>Press 'I' to activate city immunity for 3 waves (once per level).</p>
+                <p>Press 'R' to double missile explosion radius for 5 waves (once per level).</p>
+                <p>Press 'M' to reduce enemy missiles by 4 for 4 waves (once per level).</p>
                 <p class="click-to-start">Click anywhere to start</p>
+            </div>
+
+            <div id="pause-screen">
+                <h2>GAME PAUSED</h2>
+                <p>Press 'P' to resume</p>
+                <p>Controls:</p>
+                <p>S - Toggle Sound</p>
+                <p>I - City Immunity (3 waves)</p>
+                <p>R - Double Explosion Radius (5 waves)</p>
+                <p>M - Reduce Enemy Missiles (4 waves)</p>
             </div>
         </div>
     </div>
@@ -128,6 +170,7 @@
             const gameContainer = document.querySelector('.game-container');
             const crosshair = document.querySelector('.crosshair');
             const splashScreen = document.getElementById('splash-screen');
+            const pauseScreen = document.getElementById('pause-screen');
 
             // Constants
             const CANVAS_WIDTH = 800;
@@ -154,6 +197,7 @@
             let timerID;
             let gameStarted = false;
             let soundEnabled = false; // Inicialmente deshabilitado
+            let gamePaused = false;
 
             let currentWave = 0;
             let waveActive = false;
@@ -168,6 +212,19 @@
             let planesShotDownThisLevel = 0; // NUEVO: Contador de aviones derribados en el nivel actual
             let reconstructedCount = 0; // NUEVO: Contador de ciudades/lanzaderas reconstruidas
             let extraMissilesFromSpyPlane = 0; // Track missiles from spy plane
+
+            // Power-ups
+            let immunityActive = false;
+            let immunityWavesLeft = 0;
+            let explosionBoostActive = false;
+            let explosionBoostWavesLeft = 0;
+            let enemyReductionActive = false;
+            let enemyReductionWavesLeft = 0;
+            let powerUpUsedThisLevel = {
+                immunity: false,
+                explosion: false,
+                reduction: false
+            };
 
             // Enemy Plane
             let enemyPlane = null;
@@ -215,6 +272,7 @@
                 currentWave = 0;
                 waveActive = false;
                 gameStarted = false;
+                gamePaused = false;
                 soundEnabled = false;
                 bonusMissilesForNextWave = 0; // Reset bonus at game start
                 enemyPlane = null; // Reset plane
@@ -237,6 +295,19 @@
                 killerPlanesAppearedThisLevel = 0; // Reset killer plane count
                 citiesImmune = false; // Reset city immunity
                 killerPlaneSpawnedThisLevel = false; // Reset flag for new game
+                
+                // Reset power-ups
+                immunityActive = false;
+                immunityWavesLeft = 0;
+                explosionBoostActive = false;
+                explosionBoostWavesLeft = 0;
+                enemyReductionActive = false;
+                enemyReductionWavesLeft = 0;
+                powerUpUsedThisLevel = {
+                    immunity: false,
+                    explosion: false,
+                    reduction: false
+                };
 
                 // Create cities
                 cities.push(new City(100, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
@@ -296,6 +367,19 @@
                 killerPlanesAppearedThisLevel = 0; // Reset killer plane count
                 citiesImmune = false; // Reset city immunity for the new level
                 killerPlaneSpawnedThisLevel = false; // Reset flag for new level
+                
+                // Reset power-ups for new level
+                immunityActive = false;
+                immunityWavesLeft = 0;
+                explosionBoostActive = false;
+                explosionBoostWavesLeft = 0;
+                enemyReductionActive = false;
+                enemyReductionWavesLeft = 0;
+                powerUpUsedThisLevel = {
+                    immunity: false,
+                    explosion: false,
+                    reduction: false
+                };
 
                 startNextWave(); 
             }
@@ -306,6 +390,30 @@
                 if (currentWave > WAVES_PER_LEVEL) {
                     checkEndLevel(); 
                     return;
+                }
+
+                // Update power-up counters
+                if (immunityActive) {
+                    immunityWavesLeft--;
+                    if (immunityWavesLeft <= 0) {
+                        immunityActive = false;
+                        citiesImmune = false;
+                    }
+                }
+                
+                if (explosionBoostActive) {
+                    explosionBoostWavesLeft--;
+                    if (explosionBoostWavesLeft <= 0) {
+                        explosionBoostActive = false;
+                        stealthPlaneExplosionBonus = 1;
+                    }
+                }
+                
+                if (enemyReductionActive) {
+                    enemyReductionWavesLeft--;
+                    if (enemyReductionWavesLeft <= 0) {
+                        enemyReductionActive = false;
+                    }
                 }
 
                 const initialMissiles = 10; // Starting missiles for each battery
@@ -366,7 +474,11 @@
 
                 // Apply Cargo Plane missile reduction (NEW)
                 numMissiles = Math.max(1, numMissiles - cargoPlaneEnemyMissileReduction);
-
+                
+                // Apply enemy reduction power-up
+                if (enemyReductionActive) {
+                    numMissiles = Math.max(1, numMissiles - 4);
+                }
 
                 for(let i = 0; i < numMissiles; i++) {
                     const isFast = Math.random() < 0.3; 
@@ -386,10 +498,32 @@
                 drawAntiMissileBatteries();
                 drawScore();
                 drawLevel();
+                drawPowerUpStatus();
                 ctx.fillStyle = '#0ff';
                 ctx.font = 'bold 24px Arial';
                 ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - 300, 30);
                 updateCrosshairPosition();
+            }
+
+            // Draw power-up status
+            function drawPowerUpStatus() {
+                ctx.fillStyle = '#0ff';
+                ctx.font = 'bold 16px Arial';
+                
+                // Immunity status
+                if (immunityActive) {
+                    ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, 20, 60);
+                }
+                
+                // Explosion boost status
+                if (explosionBoostActive) {
+                    ctx.fillText(`Explosion Boost: ${explosionBoostWavesLeft} waves`, 20, 90);
+                }
+                
+                // Enemy reduction status
+                if (enemyReductionActive) {
+                    ctx.fillText(`Enemy Reduction: ${enemyReductionWavesLeft} waves`, 20, 120);
+                }
             }
 
             // Update crosshair position smoothly
@@ -630,7 +764,7 @@
                     const domeCenterY = baseY - this.height * 1.3;
 
                     let domeGradient;
-                    if (citiesImmune) { // Killer Plane bonus active
+                    if (citiesImmune || immunityActive) { // Killer Plane bonus active or immunity power-up
                         domeGradient = ctx.createRadialGradient(
                             domeCenterX, domeCenterY - domeRadius / 3, 0,
                             domeCenterX, domeCenterY, domeRadius
@@ -654,11 +788,11 @@
                     ctx.closePath();
                     ctx.fill();
 
-                    ctx.strokeStyle = citiesImmune ? 'rgba(255, 255, 0, 1)' : 'rgba(0, 255, 255, 0.8)';
+                    ctx.strokeStyle = citiesImmune || immunityActive ? 'rgba(255, 255, 0, 1)' : 'rgba(0, 255, 255, 0.8)';
                     ctx.lineWidth = 2;
                     ctx.stroke();
 
-                    ctx.fillStyle = citiesImmune ? '#ffff00' : '#0ff';
+                    ctx.fillStyle = citiesImmune || immunityActive ? '#ffff00' : '#0ff';
                     ctx.beginPath();
                     ctx.arc(domeCenterX - domeRadius * 0.8, domeCenterY, 2, 0, Math.PI * 2);
                     ctx.arc(domeCenterX + domeRadius * 0.8, domeCenterY, 2, 0, Math.PI * 2);
@@ -917,7 +1051,7 @@
                         if(this.groundExplosion) {
                             if(this.target && this.target[2] instanceof City) {
                                 // City immunity check
-                                if (!citiesImmune) {
+                                if (!citiesImmune && !immunityActive) {
                                     this.target[2].active = false;
                                     // NEW: Check if all cities have been destroyed immediately
                                     checkAllCitiesDestroyed(); 
@@ -989,6 +1123,8 @@
 
             // Player shoot function
             function playerShoot(x, y) {
+                if (gamePaused) return;
+                
                 // Adjust coordinates to be relative to the canvas
                 const rect = canvas.getBoundingClientRect();
                 const canvasX = x - rect.left;
@@ -1043,6 +1179,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if(this.delay) {
                         this.delay--;
                         return;
@@ -1136,6 +1274,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if (!this.active) {
                         if (this.exploded) {
                             this.explodeRadius += 2;
@@ -1241,6 +1381,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if (!this.active) {
                         if (this.exploded) {
                             this.explodeRadius += 1.5; // Slightly slower explosion
@@ -1334,6 +1476,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if (!this.active) {
                         if (this.exploded) {
                             this.explodeRadius += 1.8; // Medium explosion speed
@@ -1434,6 +1578,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if (!this.active) {
                         if (this.exploded) {
                             this.explodeRadius += 1.2; // Even slower explosion, large plane
@@ -1533,6 +1679,8 @@
                 }
 
                 update() {
+                    if (gamePaused) return;
+                    
                     if (!this.active) {
                         if (this.exploded) {
                             this.explodeRadius += 2.5; // Fast explosion
@@ -1692,7 +1840,7 @@
                 const targets = [];
 
                 // If cities are immune, enemy missiles can only target batteries
-                if (citiesImmune) {
+                if (citiesImmune || immunityActive) {
                     antiMissileBatteries.forEach(amb => {
                         if (amb.active) {
                             targets.push([amb.x, amb.y - amb.height, amb]);
@@ -1729,6 +1877,12 @@
 
             // Game loop
             function nextFrame() {
+                if (gamePaused) {
+                    drawGameState();
+                    drawPausedGame();
+                    return;
+                }
+                
                 drawGameState();
                 updateEnemyMissiles();
                 drawEnemyMissiles();
@@ -1799,6 +1953,11 @@
                         }
                     }, 3000);
                 }
+            }
+
+            // Draw paused game screen
+            function drawPausedGame() {
+                pauseScreen.style.display = 'flex';
             }
 
             // Spawns an enemy plane
@@ -1943,6 +2102,19 @@
                 killerPlanesAppearedThisLevel = 0; // Reset killer plane count for the new level
                 citiesImmune = false; // Reset city immunity for the new level
                 killerPlaneSpawnedThisLevel = false; // Reset flag for new level
+                
+                // Reset power-ups for new level
+                immunityActive = false;
+                immunityWavesLeft = 0;
+                explosionBoostActive = false;
+                explosionBoostWavesLeft = 0;
+                enemyReductionActive = false;
+                enemyReductionWavesLeft = 0;
+                powerUpUsedThisLevel = {
+                    immunity: false,
+                    explosion: false,
+                    reduction: false
+                };
 
                 // LEVEL 1 TO 2 REWARD LOGIC (previous)
                 // Maintained, but rebuilding is now handled by the new general score logic.
@@ -2087,10 +2259,68 @@
                 // or provide some other visual feedback to the user.
             }
 
-            // Handle key press for sound toggle
+            // Toggle pause function
+            function togglePause() {
+                gamePaused = !gamePaused;
+                if (gamePaused) {
+                    pauseScreen.style.display = 'flex';
+                    stopLevel();
+                } else {
+                    pauseScreen.style.display = 'none';
+                    startLevel();
+                }
+            }
+
+            // Activate city immunity power-up
+            function activateImmunity() {
+                if (!powerUpUsedThisLevel.immunity) {
+                    immunityActive = true;
+                    immunityWavesLeft = 3;
+                    citiesImmune = true;
+                    powerUpUsedThisLevel.immunity = true;
+                    console.log("City immunity activated for 3 waves!");
+                } else {
+                    console.log("Immunity power-up already used this level!");
+                }
+            }
+
+            // Activate explosion boost power-up
+            function activateExplosionBoost() {
+                if (!powerUpUsedThisLevel.explosion) {
+                    explosionBoostActive = true;
+                    explosionBoostWavesLeft = 5;
+                    stealthPlaneExplosionBonus = 2;
+                    powerUpUsedThisLevel.explosion = true;
+                    console.log("Explosion radius doubled for 5 waves!");
+                } else {
+                    console.log("Explosion boost power-up already used this level!");
+                }
+            }
+
+            // Activate enemy reduction power-up
+            function activateEnemyReduction() {
+                if (!powerUpUsedThisLevel.reduction) {
+                    enemyReductionActive = true;
+                    enemyReductionWavesLeft = 4;
+                    powerUpUsedThisLevel.reduction = true;
+                    console.log("Enemy missiles reduced by 4 for 4 waves!");
+                } else {
+                    console.log("Enemy reduction power-up already used this level!");
+                }
+            }
+
+            // Handle key press for sound toggle and other functions
             function handleKeyPress(event) {
                 if (event.key === 's' || event.key === 'S') {
                     toggleSound();
+                } else if (event.key === 'p' || event.key === 'P') {
+                    togglePause();
+                } else if (event.key === 'i' || event.key === 'I') {
+                    activateImmunity();
+                } else if (event.key === 'r' || event.key === 'R') {
+                    activateExplosionBoost();
+                } else if (event.key === 'm' || event.key === 'M') {
+                    activateEnemyReduction();
                 }
             }
 
@@ -2103,7 +2333,7 @@
                     switch(type) {
                         case 'shoot':
                             // Data for a short, sharp shooting sound
-                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR4AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
+                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR6AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
                             break;
                         case 'gameOver':
                             // Data for a game over sound (usually a low, sustained tone or a series of tones)
