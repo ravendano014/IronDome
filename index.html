@@ -13,12 +13,12 @@
         body {
             background-color: #111;
             display: flex;
-            flex-direction: column; /* Alinea el título y el juego en columna */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            cursor: none; /* Ocultar el cursor del sistema para usar nuestro crosshair */
+            cursor: none;
         }
 
         .game-container {
@@ -26,24 +26,28 @@
             background-color: #000;
             border: 2px solid #444;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            width: 800px; /* Vuelve al ancho fijo */
-            height: 600px; /* Vuelve al alto fijo */
+            width: 90vw;
+            height: calc(90vw * 0.75); /* Mantener relación de aspecto 4:3 */
+            max-width: calc(100vh * 1.333); /* Máximo basado en altura */
+            max-height: 90vh;
         }
 
         canvas {
-            display: block; /* Asegura que no haya espacio extra debajo del canvas */
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .crosshair {
             position: absolute;
-            width: 30px; /* Vuelve al tamaño fijo del crosshair */
-            height: 30px; /* Vuelve al tamaño fijo del crosshair */
+            width: 30px;
+            height: 30px;
             border: 2px solid lime;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1000;
-            display: none; /* Inicialmente oculto */
+            display: none;
         }
 
         h1 {
@@ -62,16 +66,16 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.95); /* Fondo oscuro semitransparente */
+            background-color: rgba(0, 0, 0, 0.95);
             color: #fff;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            z-index: 1001; /* Asegura que esté por encima del juego */
+            z-index: 1001;
             font-family: 'Arial', sans-serif;
-            cursor: pointer; /* Indica que es clickeable */
+            cursor: pointer;
         }
 
         #splash-screen h2 {
@@ -85,7 +89,7 @@
             font-size: 1.5em;
             margin: 5px 0;
             color: #eee;
-            max-width: 70%; /* Limita el ancho del texto */
+            max-width: 70%;
         }
 
         #splash-screen .click-to-start {
@@ -93,7 +97,7 @@
             font-size: 2em;
             color: #ff0;
             text-shadow: 0 0 10px #ff0;
-            animation: pulse 1.5s infinite alternate; /* Animación de pulsación */
+            animation: pulse 1.5s infinite alternate;
         }
 
         /* Estilo para la pantalla de pausa */
@@ -134,7 +138,7 @@
     <div>
         <h1>Iron Dome Enhanced</h1>
         <div class="game-container">
-            <canvas width="800" height="600"></canvas>
+            <canvas></canvas>
             <div class="crosshair"></div>
             
             <div id="splash-screen">
@@ -172,13 +176,53 @@
             const splashScreen = document.getElementById('splash-screen');
             const pauseScreen = document.getElementById('pause-screen');
 
+            // Variables para dimensiones dinámicas
+            let CANVAS_WIDTH = 800;
+            let CANVAS_HEIGHT = 600;
+            let scaleFactor = 1;
+            
+            // Actualizar dimensiones del canvas
+            function updateCanvasDimensions() {
+                const container = canvas.parentElement;
+                CANVAS_WIDTH = container.clientWidth;
+                CANVAS_HEIGHT = container.clientHeight;
+                canvas.width = CANVAS_WIDTH;
+                canvas.height = CANVAS_HEIGHT;
+                
+                // Calcular factor de escala basado en el tamaño original (800x600)
+                scaleFactor = Math.min(CANVAS_WIDTH / 800, CANVAS_HEIGHT / 600);
+                
+                // Redibujar el juego si ya ha comenzado
+                if (gameStarted) {
+                    drawGameState();
+                }
+            }
+
+            // Escalar un valor según el tamaño actual del canvas
+            function scaleValue(value) {
+                return value * scaleFactor;
+            }
+
+            // Escalar una posición horizontal
+            function scaleX(x) {
+                return x * (CANVAS_WIDTH / 800);
+            }
+
+            // Escalar una posición vertical
+            function scaleY(y) {
+                return y * (CANVAS_HEIGHT / 600);
+            }
+
+            // Escalar dimensiones (ancho y alto)
+            function scaleDimensions(width, height) {
+                return [width * (CANVAS_WIDTH / 800), height * (CANVAS_HEIGHT / 600)];
+            }
+
             // Constants
-            const CANVAS_WIDTH = 800;
-            const CANVAS_HEIGHT = 600;
-            const GROUND_HEIGHT = 100; // Fixed ground height
-            const MAX_STEALTH_PLANES_PER_LEVEL = 10; // Five stelth plane per level
-            const MAX_CARGO_PLANES_PER_LEVEL = 10; // Four cargo plane per level
-            const WAVES_PER_LEVEL = 10; // Each level will have 10 waves
+            const GROUND_HEIGHT = scaleValue(100);
+            const MAX_STEALTH_PLANES_PER_LEVEL = 10;
+            const MAX_CARGO_PLANES_PER_LEVEL = 10;
+            const WAVES_PER_LEVEL = 10;
 
             const MISSILE = {
                 active: 1,
@@ -187,7 +231,7 @@
                 exploded: 4
             };
 
-            // Variables
+            // Variables del juego
             let score = 0;
             let level = 1;
             let cities = [];
@@ -196,24 +240,39 @@
             let enemyMissiles = [];
             let timerID;
             let gameStarted = false;
-            let soundEnabled = false; // Inicialmente deshabilitado
+            let soundEnabled = false;
             let gamePaused = false;
-
             let currentWave = 0;
             let waveActive = false;
-
             let targetCrosshairX = 0;
             let targetCrosshairY = 0;
             let currentCrosshairX = 0;
             let currentCrosshairY = 0;
             const smoothingFactor = 0.15;
-            
             let bonusMissilesForNextWave = 0;
-            let planesShotDownThisLevel = 0; // NUEVO: Contador de aviones derribados en el nivel actual
-            let reconstructedCount = 0; // NUEVO: Contador de ciudades/lanzaderas reconstruidas
-            let extraMissilesFromSpyPlane = 0; // Track missiles from spy plane
-
-            // Power-ups
+            let planesShotDownThisLevel = 0;
+            let reconstructedCount = 0;
+            let extraMissilesFromSpyPlane = 0;
+            let enemyPlane = null;
+            let planesPerLevel = 0;
+            const MAX_PLANES_PER_LEVEL = 10;
+            let spyPlane = null;
+            let spyPlanesAppearedThisLevel = 0;
+            const MAX_SPY_PLANES_PER_LEVEL = 10;
+            let spyPlaneWaveMissileBonus = 0;
+            let stealthPlane = null;
+            let stealthPlanesAppearedThisLevel = 0;
+            let stealthPlaneExplosionBonus = 1;
+            let stealthPlaneSpawnedThisLevel = false;
+            let cargoPlane = null;
+            let cargoPlanesAppearedThisLevel = 0;
+            let cargoPlaneEnemyMissileReduction = 0;
+            let cargoPlaneSpawnedThisLevel = false;
+            let killerPlane = null;
+            let killerPlanesAppearedThisLevel = 0;
+            const MAX_KILLER_PLANES_PER_LEVEL = 10;
+            let citiesImmune = false;
+            let killerPlaneSpawnedThisLevel = false;
             let immunityActive = false;
             let immunityWavesLeft = 0;
             let explosionBoostActive = false;
@@ -226,43 +285,28 @@
                 reduction: false
             };
 
-            // Enemy Plane
-            let enemyPlane = null;
-            let planesPerLevel = 0; // Counter for planes that have appeared in the current level
-            const MAX_PLANES_PER_LEVEL = 10; // Maximum planes per level
-
-            // Spy Plane (NEW)
-            let spyPlane = null;
-            let spyPlanesAppearedThisLevel = 0; // Counter for spy planes appeared in the current level
-            const MAX_SPY_PLANES_PER_LEVEL = 10; // Maximum spy planes per level
-            let spyPlaneWaveMissileBonus = 0; // Accumulates missile bonus from spy planes
-
-            // Stealth Plane (NEW)
-            let stealthPlane = null;
-            let stealthPlanesAppearedThisLevel = 0;
-            let stealthPlaneExplosionBonus = 1; // Multiplier for explosion radius (1 for normal, 2 for bonus)
-            let stealthPlaneSpawnedThisLevel = false; // Track if stealth plane has spawned this level
-
-            // Cargo Plane (NEW)
-            let cargoPlane = null;
-            let cargoPlanesAppearedThisLevel = 0;
-            let cargoPlaneEnemyMissileReduction = 0; // Reduction in enemy missiles per wave (up to 2 per level)
-            let cargoPlaneSpawnedThisLevel = false; // Track if cargo plane has spawned this level
-
-            // Killer Plane (NEW)
-            let killerPlane = null;
-            let killerPlanesAppearedThisLevel = 0;
-            const MAX_KILLER_PLANES_PER_LEVEL = 10; // Max one killer plane per level
-            let citiesImmune = false; // Flag for city immunity
-            let killerPlaneSpawnedThisLevel = false; // Track if killer plane has spawned this level
-
             // Initialize game
             function initialize() {
-                // Set canvas dimensions explicitly (already set in HTML but good practice)
-                canvas.width = CANVAS_WIDTH;
-                canvas.height = CANVAS_HEIGHT;
+                updateCanvasDimensions();
+                
+                // Configurar evento de redimensionamiento
+                window.addEventListener('resize', () => {
+                    updateCanvasDimensions();
+                });
 
-                // Reset game state for a new game
+                // Reset game state
+                resetGameState();
+                
+                // Create cities
+                createCities();
+                
+                // Create anti-missile batteries
+                createBatteries();
+                
+                drawGameState();
+            }
+
+            function resetGameState() {
                 cities = [];
                 antiMissileBatteries = [];
                 playerMissiles = [];
@@ -274,29 +318,27 @@
                 gameStarted = false;
                 gamePaused = false;
                 soundEnabled = false;
-                bonusMissilesForNextWave = 0; // Reset bonus at game start
-                enemyPlane = null; // Reset plane
-                planesPerLevel = 0; // Reset plane counter
-                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados
-                reconstructedCount = 0; // Reiniciar contador de reconstrucciones
-                spyPlane = null; // Reset spy plane
-                spyPlanesAppearedThisLevel = 0; // Reset spy plane count
-                spyPlaneWaveMissileBonus = 0; // Reset spy plane missile bonus
-                extraMissilesFromSpyPlane = 0; // Reset bonus missiles from spy plane
-                stealthPlane = null; // Reset stealth plane
-                stealthPlanesAppearedThisLevel = 0; // Reset stealth plane count
-                stealthPlaneExplosionBonus = 1; // Reset bonus
-                stealthPlaneSpawnedThisLevel = false; // Reset flag for new game
-                cargoPlane = null; // Reset cargo plane
-                cargoPlanesAppearedThisLevel = 0; // Reset cargo plane count
-                cargoPlaneEnemyMissileReduction = 0; // Reset bonus
-                cargoPlaneSpawnedThisLevel = false; // Reset flag for new game
-                killerPlane = null; // Reset killer plane
-                killerPlanesAppearedThisLevel = 0; // Reset killer plane count
-                citiesImmune = false; // Reset city immunity
-                killerPlaneSpawnedThisLevel = false; // Reset flag for new game
-                
-                // Reset power-ups
+                bonusMissilesForNextWave = 0;
+                enemyPlane = null;
+                planesPerLevel = 0;
+                planesShotDownThisLevel = 0;
+                reconstructedCount = 0;
+                spyPlane = null;
+                spyPlanesAppearedThisLevel = 0;
+                spyPlaneWaveMissileBonus = 0;
+                extraMissilesFromSpyPlane = 0;
+                stealthPlane = null;
+                stealthPlanesAppearedThisLevel = 0;
+                stealthPlaneExplosionBonus = 1;
+                stealthPlaneSpawnedThisLevel = false;
+                cargoPlane = null;
+                cargoPlanesAppearedThisLevel = 0;
+                cargoPlaneEnemyMissileReduction = 0;
+                cargoPlaneSpawnedThisLevel = false;
+                killerPlane = null;
+                killerPlanesAppearedThisLevel = 0;
+                citiesImmune = false;
+                killerPlaneSpawnedThisLevel = false;
                 immunityActive = false;
                 immunityWavesLeft = 0;
                 explosionBoostActive = false;
@@ -308,23 +350,21 @@
                     explosion: false,
                     reduction: false
                 };
+            }
 
-                // Create cities
-                cities.push(new City(100, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
-                cities.push(new City(200, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
-                cities.push(new City(300, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
-                cities.push(new City(500, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
-                cities.push(new City(600, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
-                cities.push(new City(700, CANVAS_HEIGHT - GROUND_HEIGHT + 20));
+            function createCities() {
+                cities.push(new City(scaleX(100), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+                cities.push(new City(scaleX(200), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+                cities.push(new City(scaleX(300), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+                cities.push(new City(scaleX(500), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+                cities.push(new City(scaleX(600), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+                cities.push(new City(scaleX(700), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT + 20)));
+            }
 
-                // Create anti-missile batteries
-                antiMissileBatteries.push(new AntiMissileBattery(50, CANVAS_HEIGHT - GROUND_HEIGHT));
-                antiMissileBatteries.push(new AntiMissileBattery(400, CANVAS_HEIGHT - GROUND_HEIGHT));
-                antiMissileBatteries.push(new AntiMissileBattery(750, CANVAS_HEIGHT - GROUND_HEIGHT));
-                
-                // Draw initial state (including splash screen)
-                drawGameState(); 
-                // Do NOT call initializeLevel or startLevel here. It will be called after splash screen click.
+            function createBatteries() {
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
             }
 
             // Setup event listeners
@@ -347,28 +387,26 @@
                 playerMissiles = [];
                 enemyMissiles = [];
                 currentWave = 0; 
-                enemyPlane = null; // Ensure no active plane at level start
-                planesPerLevel = 0; // Reset plane counter per level
-                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados por nivel
-                reconstructedCount = 0; // Reiniciar contador de reconstrucciones por nivel
-                spyPlane = null; // Reset spy plane for the new level
-                spyPlanesAppearedThisLevel = 0; // Reset spy plane count for the new level
-                spyPlaneWaveMissileBonus = 0; // Reset spy plane missile bonus for the new level
-                extraMissilesFromSpyPlane = 0; // Reset bonus missiles from spy plane for the new level
-                stealthPlane = null; // Reset stealth plane for the new level
-                stealthPlanesAppearedThisLevel = 0; // Reset stealth plane count for the new level
-                stealthPlaneExplosionBonus = 1; // Reset bonus for the new level
-                stealthPlaneSpawnedThisLevel = false; // Reset flag for new level
-                cargoPlane = null; // Reset cargo plane for the new level
-                cargoPlanesAppearedThisLevel = 0; // Reset cargo plane count for the new level
-                cargoPlaneEnemyMissileReduction = 0; // Reset bonus
-                cargoPlaneSpawnedThisLevel = false; // Reset flag for new level
-                killerPlane = null; // Reset killer plane
-                killerPlanesAppearedThisLevel = 0; // Reset killer plane count
-                citiesImmune = false; // Reset city immunity for the new level
-                killerPlaneSpawnedThisLevel = false; // Reset flag for new level
-                
-                // Reset power-ups for new level
+                enemyPlane = null;
+                planesPerLevel = 0;
+                planesShotDownThisLevel = 0;
+                reconstructedCount = 0;
+                spyPlane = null;
+                spyPlanesAppearedThisLevel = 0;
+                spyPlaneWaveMissileBonus = 0;
+                extraMissilesFromSpyPlane = 0;
+                stealthPlane = null;
+                stealthPlanesAppearedThisLevel = 0;
+                stealthPlaneExplosionBonus = 1;
+                stealthPlaneSpawnedThisLevel = false;
+                cargoPlane = null;
+                cargoPlanesAppearedThisLevel = 0;
+                cargoPlaneEnemyMissileReduction = 0;
+                cargoPlaneSpawnedThisLevel = false;
+                killerPlane = null;
+                killerPlanesAppearedThisLevel = 0;
+                citiesImmune = false;
+                killerPlaneSpawnedThisLevel = false;
                 immunityActive = false;
                 immunityWavesLeft = 0;
                 explosionBoostActive = false;
@@ -416,7 +454,7 @@
                     }
                 }
 
-                const initialMissiles = 10; // Starting missiles for each battery
+                const initialMissiles = 10;
                 
                 let missilesForThisWave = initialMissiles;
                 if (level === 2 && currentWave === 1 && bonusMissilesForNextWave > 0) {
@@ -426,22 +464,20 @@
 
                 const reductionPerTwoWaves = Math.floor((currentWave - 1) / 2);
                 antiMissileBatteries.forEach(amb => {
-                    // Only reload missiles if the battery is active
                     if (amb.active) { 
-                        amb.missilesLeft = Math.max(0, missilesForThisWave - reductionPerTwoWaves + spyPlaneWaveMissileBonus); // Add spy plane bonus
+                        amb.missilesLeft = Math.max(0, missilesForThisWave - reductionPerTwoWaves + spyPlaneWaveMissileBonus);
                     } else {
-                        amb.missilesLeft = 0; // Ensure no missiles if destroyed
+                        amb.missilesLeft = 0;
                     }
                 });
 
                 waveActive = true;
                 createEnemyMissiles();
-                // Call spawnEnemyPlane after creating missiles, so it appears between waves
                 spawnEnemyPlane(); 
-                spawnSpyPlane(); // Attempt to spawn spy plane
-                spawnStealthPlane(); // Attempt to spawn stealth plane (NEW)
-                spawnCargoPlane(); // Attempt to spawn cargo plane (NEW)
-                spawnKillerPlane(); // Attempt to spawn killer plane (NEW)
+                spawnSpyPlane();
+                spawnStealthPlane();
+                spawnCargoPlane();
+                spawnKillerPlane();
 
                 drawGameState(); 
                 startLevel(); 
@@ -472,7 +508,7 @@
                     }
                 }
 
-                // Apply Cargo Plane missile reduction (NEW)
+                // Apply Cargo Plane missile reduction
                 numMissiles = Math.max(1, numMissiles - cargoPlaneEnemyMissileReduction);
                 
                 // Apply enemy reduction power-up
@@ -500,29 +536,26 @@
                 drawLevel();
                 drawPowerUpStatus();
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - 300, 30);
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(300), scaleY(30));
                 updateCrosshairPosition();
             }
 
             // Draw power-up status
             function drawPowerUpStatus() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 16px Arial';
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
                 
-                // Immunity status
                 if (immunityActive) {
-                    ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, 20, 60);
+                    ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, scaleX(20), scaleY(60));
                 }
                 
-                // Explosion boost status
                 if (explosionBoostActive) {
-                    ctx.fillText(`Explosion Boost: ${explosionBoostWavesLeft} waves`, 20, 90);
+                    ctx.fillText(`Explosion Boost: ${explosionBoostWavesLeft} waves`, scaleX(20), scaleY(90));
                 }
                 
-                // Enemy reduction status
                 if (enemyReductionActive) {
-                    ctx.fillText(`Enemy Reduction: ${enemyReductionWavesLeft} waves`, 20, 120);
+                    ctx.fillText(`Enemy Reduction: ${enemyReductionWavesLeft} waves`, scaleX(20), scaleY(120));
                 }
             }
 
@@ -531,28 +564,27 @@
                 currentCrosshairX += (targetCrosshairX - currentCrosshairX) * smoothingFactor;
                 currentCrosshairY += (targetCrosshairY - currentCrosshairY) * smoothingFactor;
 
-                // Position crosshair relative to gameContainer, as canvas is fixed within it.
                 crosshair.style.left = `${currentCrosshairX}px`;
                 crosshair.style.top = `${currentCrosshairY}px`;
             }
 
-            // Draw begin level screen (for transitions between levels, not initial start)
+            // Draw begin level screen
             function drawBeginLevel() {
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(100, 150, 600, 300);
+                ctx.fillRect(scaleX(100), scaleY(150), scaleX(600), scaleY(300));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 30px Arial';
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('DEFEND YOUR CITIES', CANVAS_WIDTH / 2, 200);
+                ctx.fillText('DEFEND YOUR CITIES', CANVAS_WIDTH / 2, scaleY(200));
                 
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(`LEVEL ${level}`, CANVAS_WIDTH / 2, 250);
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`LEVEL ${level}`, CANVAS_WIDTH / 2, scaleY(250));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('CLICK TO START', CANVAS_WIDTH / 2, 350);
+                ctx.fillText('CLICK TO START', CANVAS_WIDTH / 2, scaleY(350));
                 
                 ctx.textAlign = 'left';
             }
@@ -560,51 +592,49 @@
             // Draw score
             function drawScore() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(`Score: ${score}`, 70, 30);
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Score: ${score}`, scaleX(70), scaleY(30));
             }
 
             // Draw level
             function drawLevel() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 24px Arial';
-                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - 150, 30);
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(150), scaleY(30));
             }
 
             // Draw end level screen
-            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthPlaneBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) { // Added killerPlaneImmunityActive
+            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthPlaneBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) {
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(100, 100, 600, 400);
+                ctx.fillRect(scaleX(100), scaleY(100), scaleX(600), scaleY(400));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = 'bold 30px Arial';
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, 150);
+                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(150));
                 
-                ctx.font = 'bold 20px Arial'; // Adjusted font size for more lines
-                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, 180); // Adjusted Y
-                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, 210); // Adjusted Y
-                
-                // NEW: Display planes shot down and structures rebuilt
-                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, 240); // Adjusted Y
-                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, 270); // Adjusted Y (Use reconstructedCount directly)
-                if (spyPlaneBonus > 0) { // Changed spyPlaneMissileBonus to spyPlaneBonus
-                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, 300); // Adjusted Y
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(180));
+                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(210));
+                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(240));
+                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(270));
+                if (spyPlaneBonus > 0) {
+                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, scaleY(300));
                 }
-                if (stealthPlaneBonusActive) { // NEW: Display stealth plane bonus
-                    ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, 330); // Adjusted Y
+                if (stealthPlaneBonusActive) {
+                    ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, scaleY(330));
                 }
-                if (cargoPlaneMissileReduction > 0) { // NEW: Display cargo plane bonus
-                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction} Enemy Missiles/Wave!`, CANVAS_WIDTH / 2, 360); // Adjusted Y
+                if (cargoPlaneMissileReduction > 0) {
+                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction} Enemy Missiles/Wave!`, CANVAS_WIDTH / 2, scaleY(360));
                 }
-                if (killerPlaneImmunityActive) { // NEW: Display killer plane bonus
-                    ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, 390); // Adjusted Y
+                if (killerPlaneImmunityActive) {
+                    ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, scaleY(390));
                 }
 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, 420); // Adjusted Y position
+                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(420));
                 
                 ctx.textAlign = 'left';
             }
@@ -615,15 +645,15 @@
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 40px Arial';
+                ctx.font = `bold ${scaleValue(40)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 40);
+                ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - scaleY(40));
                 
-                ctx.font = 'bold 30px Arial';
-                ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(20));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('CLICK TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 80);
+                ctx.fillText('CLICK TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
                 
                 ctx.textAlign = 'left';
             }
@@ -640,7 +670,7 @@
             // Draw anti-missile batteries
             function drawAntiMissileBatteries() {
                 antiMissileBatteries.forEach(amb => {
-                    if (amb.draw) { // Ensure the draw method exists (for destroyed state)
+                    if (amb.draw) {
                         amb.draw();
                     }
                 });
@@ -706,8 +736,8 @@
                     this.x = x;
                     this.y = y;
                     this.active = true;
-                    this.width = 60;
-                    this.height = 40;
+                    this.width = scaleValue(60);
+                    this.height = scaleValue(40);
                 }
 
                 draw() {
@@ -717,9 +747,9 @@
                     const baseY = this.y;
 
                     ctx.fillStyle = '#222';
-                    ctx.fillRect(baseX - 5, baseY - 10, this.width + 10, 10);
+                    ctx.fillRect(baseX - scaleValue(5), baseY - scaleValue(10), this.width + scaleValue(10), scaleValue(10));
                     ctx.fillStyle = '#555';
-                    ctx.fillRect(baseX - 2, baseY - 12, this.width + 4, 2); 
+                    ctx.fillRect(baseX - scaleValue(2), baseY - scaleValue(12), this.width + scaleValue(4), scaleValue(2)); 
 
                     const buildingTypes = [
                         { widthFactor: 0.2, heightFactor: 1.2, color: 'hsl(200, 80%, 50%)' },
@@ -727,7 +757,7 @@
                         { widthFactor: 0.22, heightFactor: 1.0, color: 'hsl(160, 70%, 55%)' }
                     ];
                     
-                    let currentX = baseX + 5;
+                    let currentX = baseX + scaleValue(5);
 
                     for (let i = 0; i < buildingTypes.length; i++) {
                         const type = buildingTypes[i];
@@ -737,26 +767,26 @@
 
                         ctx.fillStyle = buildingColor;
                         ctx.beginPath();
-                        ctx.moveTo(currentX, baseY - 10);
-                        ctx.lineTo(currentX, baseY - 10 - buildingHeight);
-                        ctx.lineTo(currentX + buildingWidth, baseY - 10 - buildingHeight);
-                        ctx.lineTo(currentX + buildingWidth, baseY - 10);
+                        ctx.moveTo(currentX, baseY - scaleValue(10));
+                        ctx.lineTo(currentX, baseY - scaleValue(10) - buildingHeight);
+                        ctx.lineTo(currentX + buildingWidth, baseY - scaleValue(10) - buildingHeight);
+                        ctx.lineTo(currentX + buildingWidth, baseY - scaleValue(10));
                         ctx.closePath();
                         ctx.fill();
 
                         ctx.fillStyle = `rgba(0, 255, 255, 0.8)`;
-                        ctx.fillRect(currentX + buildingWidth * 0.1, baseY - 10 - buildingHeight - 3, buildingWidth * 0.8, 3);
+                        ctx.fillRect(currentX + buildingWidth * 0.1, baseY - scaleValue(10) - buildingHeight - scaleValue(3), buildingWidth * 0.8, scaleValue(3));
                         
                         ctx.fillStyle = '#0ff';
-                        const panelHeight = 5;
+                        const panelHeight = scaleValue(5);
                         const panelWidth = buildingWidth * 0.6;
-                        for (let r = 0; r < Math.floor(buildingHeight / (panelHeight + 8)); r++) {
+                        for (let r = 0; r < Math.floor(buildingHeight / (panelHeight + scaleValue(8))); r++) {
                             ctx.fillRect(currentX + (buildingWidth - panelWidth) / 2, 
-                                         baseY - 10 - buildingHeight + 5 + r * (panelHeight + 8),
+                                         baseY - scaleValue(10) - buildingHeight + scaleValue(5) + r * (panelHeight + scaleValue(8)),
                                          panelWidth, panelHeight);
                         }
                         
-                        currentX += buildingWidth + 5;
+                        currentX += buildingWidth + scaleValue(5);
                     }
 
                     const domeRadius = this.width / 2;
@@ -764,12 +794,12 @@
                     const domeCenterY = baseY - this.height * 1.3;
 
                     let domeGradient;
-                    if (citiesImmune || immunityActive) { // Killer Plane bonus active or immunity power-up
+                    if (citiesImmune || immunityActive) {
                         domeGradient = ctx.createRadialGradient(
                             domeCenterX, domeCenterY - domeRadius / 3, 0,
                             domeCenterX, domeCenterY, domeRadius
                         );
-                        domeGradient.addColorStop(0, 'rgba(255, 255, 0, 0.9)'); // Bright yellow
+                        domeGradient.addColorStop(0, 'rgba(255, 255, 0, 0.9)');
                         domeGradient.addColorStop(0.8, 'rgba(200, 200, 0, 0.7)');
                         domeGradient.addColorStop(1, 'rgba(150, 150, 0, 0.5)');
                     } else {
@@ -789,13 +819,13 @@
                     ctx.fill();
 
                     ctx.strokeStyle = citiesImmune || immunityActive ? 'rgba(255, 255, 0, 1)' : 'rgba(0, 255, 255, 0.8)';
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = scaleValue(2);
                     ctx.stroke();
 
                     ctx.fillStyle = citiesImmune || immunityActive ? '#ffff00' : '#0ff';
                     ctx.beginPath();
-                    ctx.arc(domeCenterX - domeRadius * 0.8, domeCenterY, 2, 0, Math.PI * 2);
-                    ctx.arc(domeCenterX + domeRadius * 0.8, domeCenterY, 2, 0, Math.PI * 2);
+                    ctx.arc(domeCenterX - domeRadius * 0.8, domeCenterY, scaleValue(2), 0, Math.PI * 2);
+                    ctx.arc(domeCenterX + domeRadius * 0.8, domeCenterY, scaleValue(2), 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -806,12 +836,12 @@
                     this.x = x;
                     this.y = y;
                     this.missilesLeft = 10;
-                    this.width = 60; // Increased width
-                    this.height = 50; // Increased height
+                    this.width = scaleValue(60);
+                    this.height = scaleValue(50);
                     this.active = true;
                     this.health = 3;
-                    this.radarAngle = 0; // For radar animation
-                    this.animationFrame = 0; // For general animations
+                    this.radarAngle = 0;
+                    this.animationFrame = 0;
                 }
 
                 hasMissile() {
@@ -821,52 +851,52 @@
                 draw() {
                     const baseX = this.x - this.width / 2;
                     const baseY = this.y;
-                    const siloHeight = 25; // Define siloHeight for VLS drawing
+                    const siloHeight = scaleValue(25);
 
                     if (!this.active) {
-                        // Destroyed state: rubble and broken structures
-                        ctx.fillStyle = '#333'; // Dark gray rubble
+                        // Destroyed state
+                        ctx.fillStyle = '#333';
                         ctx.beginPath();
                         ctx.moveTo(baseX, baseY);
                         ctx.lineTo(baseX + this.width, baseY);
-                        ctx.lineTo(baseX + this.width - 5, baseY - 10);
-                        ctx.lineTo(baseX + 5, baseY - 10);
+                        ctx.lineTo(baseX + this.width - scaleValue(5), baseY - scaleValue(10));
+                        ctx.lineTo(baseX + scaleValue(5), baseY - scaleValue(10));
                         ctx.closePath();
                         ctx.fill();
 
                         ctx.fillStyle = '#444';
                         ctx.beginPath();
-                        ctx.moveTo(baseX + this.width * 0.2, baseY - 10);
-                        ctx.lineTo(baseX + this.width * 0.8, baseY - 10);
-                        ctx.lineTo(baseX + this.width * 0.7, baseY - 25);
-                        ctx.lineTo(baseX + this.width * 0.3, baseY - 25);
+                        ctx.moveTo(baseX + this.width * 0.2, baseY - scaleValue(10));
+                        ctx.lineTo(baseX + this.width * 0.8, baseY - scaleValue(10));
+                        ctx.lineTo(baseX + this.width * 0.7, baseY - scaleValue(25));
+                        ctx.lineTo(baseX + this.width * 0.3, baseY - scaleValue(25));
                         ctx.closePath();
                         ctx.fill();
 
                         // Some debris
                         ctx.fillStyle = '#222';
-                        ctx.fillRect(baseX + 10, baseY - 20, 5, 10);
-                        ctx.fillRect(baseX + this.width - 15, baseY - 18, 7, 8);
-                        ctx.fillRect(baseX + this.width / 2 - 3, baseY - 28, 6, 12);
-                        return; // Stop drawing if inactive
+                        ctx.fillRect(baseX + scaleValue(10), baseY - scaleValue(20), scaleValue(5), scaleValue(10));
+                        ctx.fillRect(baseX + this.width - scaleValue(15), baseY - scaleValue(18), scaleValue(7), scaleValue(8));
+                        ctx.fillRect(baseX + this.width / 2 - scaleValue(3), baseY - scaleValue(28), scaleValue(6), scaleValue(12));
+                        return;
                     }
 
                     this.animationFrame++;
-                    this.radarAngle = (this.animationFrame * 5) % 360; // Rotate radar
+                    this.radarAngle = (this.animationFrame * 5) % 360;
 
                     // Base (Trapezoid)
                     ctx.fillStyle = '#555';
                     ctx.beginPath();
                     ctx.moveTo(baseX, baseY);
                     ctx.lineTo(baseX + this.width, baseY);
-                    ctx.lineTo(baseX + this.width - 10, baseY - 15);
-                    ctx.lineTo(baseX + 10, baseY - 15);
+                    ctx.lineTo(baseX + this.width - scaleValue(10), baseY - scaleValue(15));
+                    ctx.lineTo(baseX + scaleValue(10), baseY - scaleValue(15));
                     ctx.closePath();
                     ctx.fill();
 
                     // Main Structure (Hexagon)
-                    const hexTopY = baseY - 15 - this.height * 0.6;
-                    const hexBaseY = baseY - 15;
+                    const hexTopY = baseY - scaleValue(15) - this.height * 0.6;
+                    const hexBaseY = baseY - scaleValue(15);
                     const hexWidth = this.width * 0.8;
                     const hexX = this.x;
 
@@ -875,7 +905,7 @@
                     ctx.moveTo(hexX, hexTopY);
                     ctx.lineTo(hexX + hexWidth / 2, hexBaseY - this.height * 0.3);
                     ctx.lineTo(hexX + hexWidth / 2, hexBaseY);
-                    ctx.lineTo(hexX, hexBaseY + this.height * 0.3); // Bottom point
+                    ctx.lineTo(hexX, hexBaseY + this.height * 0.3);
                     ctx.lineTo(hexX - hexWidth / 2, hexBaseY);
                     ctx.lineTo(hexX - hexWidth / 2, hexBaseY - this.height * 0.3);
                     ctx.closePath();
@@ -887,12 +917,12 @@
                     innerGradient.addColorStop(0.5, '#AAA');
                     innerGradient.addColorStop(1, '#777');
                     ctx.strokeStyle = innerGradient;
-                    ctx.lineWidth = 2;
+                    ctx.lineWidth = scaleValue(2);
                     ctx.stroke();
 
                     // VLS (Vertical Launch System) Silos
                     const siloCount = 4;
-                    const siloWidth = 8;
+                    const siloWidth = scaleValue(8);
                     const siloSpacing = (hexWidth - (siloCount * siloWidth)) / (siloCount + 1);
                     let currentSiloX = hexX - hexWidth / 2 + siloSpacing;
 
@@ -902,30 +932,30 @@
                         ctx.fillRect(currentSiloX, hexBaseY - siloHeight, siloWidth, siloHeight);
                         
                         // Missile inside silo
-                        if (this.missilesLeft > i) { // Draw missile if missiles are available
-                            ctx.fillStyle = '#0f0'; // Missile color
-                            ctx.fillRect(currentSiloX + 1, hexBaseY - siloHeight + 5, siloWidth - 2, siloHeight - 8);
+                        if (this.missilesLeft > i) {
+                            ctx.fillStyle = '#0f0';
+                            ctx.fillRect(currentSiloX + scaleValue(1), hexBaseY - siloHeight + scaleValue(5), siloWidth - scaleValue(2), siloHeight - scaleValue(8));
                             // Missile tip
                             ctx.beginPath();
-                            ctx.moveTo(currentSiloX + siloWidth / 2, hexBaseY - siloHeight + 5);
-                            ctx.lineTo(currentSiloX + 1, hexBaseY - siloHeight + 10);
-                            ctx.lineTo(currentSiloX + siloWidth - 1, hexBaseY - siloHeight + 10);
+                            ctx.moveTo(currentSiloX + siloWidth / 2, hexBaseY - siloHeight + scaleValue(5));
+                            ctx.lineTo(currentSiloX + scaleValue(1), hexBaseY - siloHeight + scaleValue(10));
+                            ctx.lineTo(currentSiloX + siloWidth - scaleValue(1), hexBaseY - siloHeight + scaleValue(10));
                             ctx.closePath();
                             ctx.fill();
                         }
 
                         // Silo lines
                         ctx.strokeStyle = '#222';
-                        ctx.lineWidth = 1;
+                        ctx.lineWidth = scaleValue(1);
                         ctx.strokeRect(currentSiloX, hexBaseY - siloHeight, siloWidth, siloHeight);
 
                         currentSiloX += siloWidth + siloSpacing;
                     }
 
                     // Radar Dome
-                    const radarRadius = 15;
+                    const radarRadius = scaleValue(15);
                     const radarCenterX = this.x;
-                    const radarCenterY = hexTopY - radarRadius + 5;
+                    const radarCenterY = hexTopY - radarRadius + scaleValue(5);
 
                     ctx.fillStyle = '#444';
                     ctx.beginPath();
@@ -933,35 +963,35 @@
                     ctx.fill();
 
                     // Radar arm (animated)
-                    ctx.save(); // Save current canvas state
-                    ctx.translate(radarCenterX, radarCenterY); // Move origin to radar center
-                    ctx.rotate(this.radarAngle * Math.PI / 180); // Rotate by radarAngle
+                    ctx.save();
+                    ctx.translate(radarCenterX, radarCenterY);
+                    ctx.rotate(this.radarAngle * Math.PI / 180);
                     ctx.fillStyle = '#0ff';
-                    ctx.fillRect(0, -1, radarRadius, 2); // Radar arm (thin line)
-                    ctx.restore(); // Restore canvas state
+                    ctx.fillRect(0, -scaleValue(1), radarRadius, scaleValue(2));
+                    ctx.restore();
 
                     // Missile count display (digital style)
-                    ctx.fillStyle = '#0ff'; // Light blue/cyan
-                    ctx.font = 'bold 12px "Press Start 2P", cursive, monospace'; // Pixelated font if available, else monospace
+                    ctx.fillStyle = '#0ff';
+                    ctx.font = `bold ${scaleValue(12)}px "Press Start 2P", cursive, monospace`;
                     ctx.textAlign = 'center';
-                    ctx.fillText(`${this.missilesLeft}`, this.x, hexTopY + 10); // Position above silos
+                    ctx.fillText(`${this.missilesLeft}`, this.x, hexTopY + scaleValue(10));
 
                     // Health bar
                     if (this.health < 3 && this.active) {
                         const barWidth = this.width * 0.7;
-                        const barHeight = 5;
+                        const barHeight = scaleValue(5);
                         const barX = this.x - barWidth / 2;
-                        const barY = baseY + 5; // Positioned below the base
+                        const barY = baseY + scaleValue(5);
 
-                        ctx.fillStyle = '#000'; // Background for the bar
+                        ctx.fillStyle = '#000';
                         ctx.fillRect(barX, barY, barWidth, barHeight);
 
                         const healthFillWidth = (this.health / 3) * barWidth;
-                        ctx.fillStyle = (this.health === 1) ? 'red' : 'orange'; // Red for 1, Orange for 2
+                        ctx.fillStyle = (this.health === 1) ? 'red' : 'orange';
                         ctx.fillRect(barX, barY, healthFillWidth, barHeight);
 
                         ctx.strokeStyle = '#888';
-                        ctx.lineWidth = 1;
+                        ctx.lineWidth = scaleValue(1);
                         ctx.strokeRect(barX, barY, barWidth, barHeight);
                     }
                 }
@@ -979,11 +1009,11 @@
                     this.x = options.startX;
                     this.y = options.startY;
                     this.state = MISSILE.active;
-                    this.width = 3;
-                    this.height = 3;
+                    this.width = scaleValue(3);
+                    this.height = scaleValue(3);
                     this.explodeRadius = 0;
                     this.speedFactor = options.speedFactor || 1;
-                    this.explosionSizeMultiplier = options.explosionSizeMultiplier || 1; // NEW: for stealth plane bonus
+                    this.explosionSizeMultiplier = options.explosionSizeMultiplier || 1;
                 }
 
                 draw() {
@@ -993,7 +1023,7 @@
                         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
                         
                         ctx.strokeStyle = gradient;
-                        ctx.lineWidth = 1;
+                        ctx.lineWidth = scaleValue(1);
                         ctx.beginPath();
                         ctx.moveTo(this.startX, this.startY);
                         ctx.lineTo(this.x, this.y);
@@ -1006,7 +1036,7 @@
                         
                         if(this.color === '#0f0') {
                             ctx.shadowColor = this.color;
-                            ctx.shadowBlur = 10;
+                            ctx.shadowBlur = scaleValue(10);
                             ctx.fill();
                             ctx.shadowBlur = 0;
                         }
@@ -1036,9 +1066,9 @@
                 }
 
                 explode() {
-                    const maxRadius = 40 * this.explosionSizeMultiplier; // Apply bonus here
-                    const implodeRate = 3 * this.speedFactor;
-                    const explodeRate = 2 * this.speedFactor;
+                    const maxRadius = scaleValue(40) * this.explosionSizeMultiplier;
+                    const implodeRate = scaleValue(3) * this.speedFactor;
+                    const explodeRate = scaleValue(2) * this.speedFactor;
 
                     if(this.state === MISSILE.exploding) {
                         this.explodeRadius += explodeRate;
@@ -1050,20 +1080,18 @@
                         this.explodeRadius -= implodeRate;
                         if(this.groundExplosion) {
                             if(this.target && this.target[2] instanceof City) {
-                                // City immunity check
                                 if (!citiesImmune && !immunityActive) {
                                     this.target[2].active = false;
-                                    // NEW: Check if all cities have been destroyed immediately
                                     checkAllCitiesDestroyed(); 
                                 }
-                            } else if (this.target && this.target[2] instanceof AntiMissileBattery) { // Target is an AntiMissileBattery
+                            } else if (this.target && this.target[2] instanceof AntiMissileBattery) {
                                 const targetBattery = this.target[2];
-                                if (targetBattery.active) { // Only damage if battery is active
+                                if (targetBattery.active) {
                                     targetBattery.health--;
                                     if (targetBattery.health <= 0) {
-                                        targetBattery.active = false; // Deactivate if health runs out
-                                        targetBattery.missilesLeft = 0; // No more missiles if destroyed
-                                        playSound('batteryDestroyed'); // Optional sound for destroyed battery
+                                        targetBattery.active = false;
+                                        targetBattery.missilesLeft = 0;
+                                        playSound('batteryDestroyed');
                                         console.log('Battery destroyed!');
                                     }
                                 }
@@ -1090,14 +1118,14 @@
                         color: '#0f0',
                         trailColor: 'rgba(0, 255, 255, 0.7)',
                         speedFactor: speedFactor,
-                        explosionSizeMultiplier: stealthPlaneExplosionBonus // Pass the bonus
+                        explosionSizeMultiplier: stealthPlaneExplosionBonus
                     });
 
                     const xDistance = this.endX - this.startX;
                     const yDistance = this.endY - this.startY;
                     
                     const distance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-                    const distancePerFrame = 15 * this.speedFactor;
+                    const distancePerFrame = scaleValue(15) * this.speedFactor;
                     const scale = distance / distancePerFrame;
 
                     this.dx = xDistance / scale;
@@ -1125,12 +1153,11 @@
             function playerShoot(x, y) {
                 if (gamePaused) return;
                 
-                // Adjust coordinates to be relative to the canvas
                 const rect = canvas.getBoundingClientRect();
                 const canvasX = x - rect.left;
                 const canvasY = y - rect.top;
 
-                if(canvasY >= 50 && canvasY <= CANVAS_HEIGHT - GROUND_HEIGHT - 50) {
+                if(canvasY >= scaleY(50) && canvasY <= CANVAS_HEIGHT - GROUND_HEIGHT - scaleY(50)) {
                     const source = whichAntiMissileBattery(canvasX);
                     if(source === -1) return;
                     
@@ -1165,8 +1192,8 @@
                         speedFactor: speedFactor
                     });
 
-                    let baseSpeed = 800;
-                    baseSpeed = Math.max(150, baseSpeed - (level * 50)); 
+                    let baseSpeed = scaleValue(800);
+                    baseSpeed = Math.max(scaleValue(150), baseSpeed - (level * scaleValue(50))); 
                     
                     const framesToTarget = (baseSpeed * (0.4 + Math.random() * 1.2)) / this.speedFactor; 
 
@@ -1174,7 +1201,7 @@
                     this.dy = (this.endY - this.startY) / framesToTarget;
                     this.target = target;
                     
-                    this.delay = isFromPlane ? 0 : rand(0, Math.max(10, 60 - level)); // No delay for plane missiles
+                    this.delay = isFromPlane ? 0 : rand(0, Math.max(10, 60 - level));
                     this.groundExplosion = false;
                 }
 
@@ -1200,7 +1227,7 @@
                         this.y += this.dy;
                         
                         if(Math.random() < 0.1) {
-                            this.x += (Math.random() - 0.5) * 3;
+                            this.x += (Math.random() - 0.5) * scaleValue(3);
                         }
                     } else {
                         this.explode();
@@ -1211,16 +1238,16 @@
             // Enemy Plane class
             class EnemyPlane {
                 constructor() {
-                    this.width = 70;
-                    this.height = 25;
-                    this.y = rand(50, CANVAS_HEIGHT / 3); // Random height in the upper third
-                    this.speed = rand(2, 4) * (1 + level * 0.1); // Random speed, increases with level
-                    this.direction = Math.random() < 0.5 ? 1 : -1; // 1 for right, -1 for left
-                    this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width; // Starts off-screen
+                    this.width = scaleValue(70);
+                    this.height = scaleValue(25);
+                    this.y = rand(scaleY(50), CANVAS_HEIGHT / 3);
+                    this.speed = rand(2, 4) * (1 + level * 0.1);
+                    this.direction = Math.random() < 0.5 ? 1 : -1;
+                    this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width;
                     this.active = true;
-                    this.missileLaunchCooldown = 60; // Frames between missile launches
+                    this.missileLaunchCooldown = 60;
                     this.currentMissileCooldown = rand(10, this.missileLaunchCooldown);
-                    this.missilesToLaunch = rand(1, 3); // Number of missiles to launch
+                    this.missilesToLaunch = rand(1, 3);
                     this.exploded = false;
                     this.explodeRadius = 0;
                 }
@@ -1228,7 +1255,6 @@
                 draw() {
                     if (!this.active) {
                         if (this.exploded) {
-                            // Draw plane explosion
                             const gradient = ctx.createRadialGradient(
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
@@ -1245,7 +1271,7 @@
                         return;
                     }
 
-                    ctx.fillStyle = '#666'; // Plane body
+                    ctx.fillStyle = '#666';
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - (this.direction * this.width * 0.7), this.y - this.height / 2);
@@ -1269,7 +1295,7 @@
                     // Cockpit
                     ctx.fillStyle = '#0f0';
                     ctx.beginPath();
-                    ctx.arc(this.x - (this.direction * this.width * 0.1), this.y, 5, 0, Math.PI * 2);
+                    ctx.arc(this.x - (this.direction * this.width * 0.1), this.y, scaleValue(5), 0, Math.PI * 2);
                     ctx.fill();
                 }
 
@@ -1278,9 +1304,9 @@
                     
                     if (!this.active) {
                         if (this.exploded) {
-                            this.explodeRadius += 2;
-                            if (this.explodeRadius > 80) {
-                                this.exploded = false; // End explosion animation
+                            this.explodeRadius += scaleValue(2);
+                            if (this.explodeRadius > scaleValue(80)) {
+                                this.exploded = false;
                             }
                         }
                         return;
@@ -1298,7 +1324,7 @@
                                 this.missilesToLaunch--;
                                 playSound('shoot');
                             }
-                            this.currentMissileCooldown = rand(30, this.missileLaunchCooldown); // Reset cooldown
+                            this.currentMissileCooldown = rand(30, this.missileLaunchCooldown);
                         }
                     }
 
@@ -1310,13 +1336,12 @@
                     }
                 }
 
-                // Method for when the plane is hit
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 500 * getMultiplier(); // Bonus for shooting down the plane (ya implementado)
-                    planesShotDownThisLevel++; // NUEVO: Incrementar el contador de aviones derribados
-                    checkPlaneReconstructionBonus(); // NUEVO: Verificar el bonus de reconstrucción
+                    score += 500 * getMultiplier();
+                    planesShotDownThisLevel++;
+                    checkPlaneReconstructionBonus();
                     playSound('explosion');
                 }
             }
@@ -1324,10 +1349,10 @@
             // Spy Plane class
             class SpyPlane {
                 constructor() {
-                    this.width = 50; // Slightly smaller
-                    this.height = 18;
-                    this.y = rand(80, CANVAS_HEIGHT / 3 - 30); // Random height, slightly lower than enemy plane
-                    this.speed = rand(3, 5) * (1 + level * 0.05); // Faster, but no missiles
+                    this.width = scaleValue(50);
+                    this.height = scaleValue(18);
+                    this.y = rand(scaleY(80), CANVAS_HEIGHT / 3 - scaleY(30));
+                    this.speed = rand(3, 5) * (1 + level * 0.05);
                     this.direction = Math.random() < 0.5 ? 1 : -1;
                     this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width;
                     this.active = true;
@@ -1342,7 +1367,7 @@
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
                             );
-                            gradient.addColorStop(0, 'rgba(200, 200, 200, 0.9)'); // Grayish explosion
+                            gradient.addColorStop(0, 'rgba(200, 200, 200, 0.9)');
                             gradient.addColorStop(0.5, 'rgba(100, 100, 100, 0.7)');
                             gradient.addColorStop(1, 'rgba(50, 50, 50, 0)');
                             
@@ -1354,7 +1379,7 @@
                         return;
                     }
 
-                    ctx.fillStyle = '#444'; // Darker gray color
+                    ctx.fillStyle = '#444';
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - (this.direction * this.width * 0.7), this.y - this.height / 2);
@@ -1377,7 +1402,7 @@
                     
                     // Small antenna/sensor on top
                     ctx.fillStyle = '#888';
-                    ctx.fillRect(this.x - (this.direction * this.width * 0.2), this.y - this.height / 2 - 5, 2, 5);
+                    ctx.fillRect(this.x - (this.direction * this.width * 0.2), this.y - this.height / 2 - scaleValue(5), scaleValue(2), scaleValue(5));
                 }
 
                 update() {
@@ -1385,8 +1410,8 @@
                     
                     if (!this.active) {
                         if (this.exploded) {
-                            this.explodeRadius += 1.5; // Slightly slower explosion
-                            if (this.explodeRadius > 60) { // Smaller explosion radius
+                            this.explodeRadius += scaleValue(1.5);
+                            if (this.explodeRadius > scaleValue(60)) {
                                 this.exploded = false;
                             }
                         }
@@ -1406,21 +1431,21 @@
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 750 * getMultiplier(); // Higher bonus for spy plane
-                    spyPlaneWaveMissileBonus += 2; // Increase missile bonus per wave for all active batteries
-                    extraMissilesFromSpyPlane += 2; // Track for end-level summary (now represents total bonus per wave)
+                    score += 750 * getMultiplier();
+                    spyPlaneWaveMissileBonus += 2;
+                    extraMissilesFromSpyPlane += 2;
                     playSound('explosion');
                     console.log(`Spy Plane shot down! Missile bonus per wave increased by 2. Total bonus: ${spyPlaneWaveMissileBonus}`);
                 }
             }
 
-            // Stealth Plane class (NEW)
+            // Stealth Plane class
             class StealthPlane {
                 constructor() {
-                    this.width = 60; 
-                    this.height = 20;
-                    this.y = rand(100, CANVAS_HEIGHT / 3 - 50); // Slightly lower than spy plane
-                    this.speed = rand(4, 6) * (1 + level * 0.08); // Even faster
+                    this.width = scaleValue(60);
+                    this.height = scaleValue(20);
+                    this.y = rand(scaleY(100), CANVAS_HEIGHT / 3 - scaleY(50));
+                    this.speed = rand(4, 6) * (1 + level * 0.08);
                     this.direction = Math.random() < 0.5 ? 1 : -1;
                     this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width;
                     this.active = true;
@@ -1435,7 +1460,7 @@
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
                             );
-                            gradient.addColorStop(0, 'rgba(100, 100, 150, 0.9)'); // Bluish-gray explosion
+                            gradient.addColorStop(0, 'rgba(100, 100, 150, 0.9)');
                             gradient.addColorStop(0.5, 'rgba(50, 50, 100, 0.7)');
                             gradient.addColorStop(1, 'rgba(20, 20, 50, 0)');
                             
@@ -1448,7 +1473,7 @@
                     }
 
                     // Stealth shape (simple triangle/delta wing)
-                    ctx.fillStyle = '#222'; // Very dark grey/black
+                    ctx.fillStyle = '#222';
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - (this.direction * this.width), this.y - this.height / 2);
@@ -1471,7 +1496,7 @@
 
                     // Outline (subtle)
                     ctx.strokeStyle = '#444';
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = scaleValue(1);
                     ctx.stroke();
                 }
 
@@ -1480,8 +1505,8 @@
                     
                     if (!this.active) {
                         if (this.exploded) {
-                            this.explodeRadius += 1.8; // Medium explosion speed
-                            if (this.explodeRadius > 70) { // Medium explosion radius
+                            this.explodeRadius += scaleValue(1.8);
+                            if (this.explodeRadius > scaleValue(70)) {
                                 this.exploded = false;
                             }
                         }
@@ -1501,20 +1526,20 @@
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 1000 * getMultiplier(); // Highest bonus for stealth plane
-                    stealthPlaneExplosionBonus = 2; // Activate the bonus!
+                    score += 1000 * getMultiplier();
+                    stealthPlaneExplosionBonus = 2;
                     playSound('explosion');
                     console.log(`Stealth Plane shot down! Missile explosion radius doubled!`);
                 }
             }
 
-            // Cargo Plane class (NEW)
+            // Cargo Plane class
             class CargoPlane {
                 constructor() {
-                    this.width = 90; // Larger than other planes
-                    this.height = 35;
-                    this.y = rand(120, CANVAS_HEIGHT / 2.5); // Slightly lower and more visible
-                    this.speed = rand(1, 2) * (1 + level * 0.05); // Slower
+                    this.width = scaleValue(90);
+                    this.height = scaleValue(35);
+                    this.y = rand(scaleY(120), CANVAS_HEIGHT / 2.5);
+                    this.speed = rand(1, 2) * (1 + level * 0.05);
                     this.direction = Math.random() < 0.5 ? 1 : -1;
                     this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width;
                     this.active = true;
@@ -1529,7 +1554,7 @@
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
                             );
-                            gradient.addColorStop(0, 'rgba(255, 150, 0, 0.9)'); // Orange-brown explosion
+                            gradient.addColorStop(0, 'rgba(255, 150, 0, 0.9)');
                             gradient.addColorStop(0.5, 'rgba(150, 75, 0, 0.7)');
                             gradient.addColorStop(1, 'rgba(100, 50, 0, 0)');
                             
@@ -1541,13 +1566,13 @@
                         return;
                     }
 
-                    ctx.fillStyle = '#8B4513'; // Brownish color (cargo plane)
+                    ctx.fillStyle = '#8B4513';
                     // Main body
                     ctx.beginPath();
                     ctx.moveTo(this.x - (this.direction * this.width * 0.1), this.y);
                     ctx.lineTo(this.x - (this.direction * this.width * 0.9), this.y);
-                    ctx.lineTo(this.x - (this.direction * this.width), this.y - this.height / 2 + 5);
-                    ctx.lineTo(this.x - (this.direction * this.width), this.y + this.height / 2 - 5);
+                    ctx.lineTo(this.x - (this.direction * this.width), this.y - this.height / 2 + scaleValue(5));
+                    ctx.lineTo(this.x - (this.direction * this.width), this.y + this.height / 2 - scaleValue(5));
                     ctx.closePath();
                     ctx.fill();
 
@@ -1573,7 +1598,7 @@
                     // Windows or cargo markings
                     ctx.fillStyle = 'rgba(200, 200, 200, 0.5)';
                     for(let i = 0; i < 3; i++) {
-                        ctx.fillRect(this.x - (this.direction * (this.width * 0.2 + i * 15)), this.y - 5, 5, 10);
+                        ctx.fillRect(this.x - (this.direction * (this.width * 0.2 + i * 15)), this.y - scaleValue(5), scaleValue(5), scaleValue(10));
                     }
                 }
 
@@ -1582,8 +1607,8 @@
                     
                     if (!this.active) {
                         if (this.exploded) {
-                            this.explodeRadius += 1.2; // Even slower explosion, large plane
-                            if (this.explodeRadius > 90) { // Larger explosion radius
+                            this.explodeRadius += scaleValue(1.2);
+                            if (this.explodeRadius > scaleValue(90)) {
                                 this.exploded = false;
                             }
                         }
@@ -1603,27 +1628,26 @@
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 1200 * getMultiplier(); // Highest bonus, slow and big target
-                    // Apply cargo plane bonus: decrease enemy missiles by 2 per next wave, capped at 2 per level
+                    score += 1200 * getMultiplier();
                     cargoPlaneEnemyMissileReduction = Math.min(2 * level, cargoPlaneEnemyMissileReduction + 2); 
                     playSound('explosion');
                     console.log(`Cargo Plane shot down! Enemy missiles per wave reduced by 2 for the rest of the level!`);
                 }
             }
 
-            // Killer Plane class (NEW)
+            // Killer Plane class
             class KillerPlane {
                 constructor() {
-                    this.width = 80;
-                    this.height = 30;
-                    this.y = rand(70, CANVAS_HEIGHT / 3 - 10); // Similar height to enemy plane
-                    this.speed = rand(2.5, 4.5) * (1 + level * 0.12); // Slightly faster than enemy plane
+                    this.width = scaleValue(80);
+                    this.height = scaleValue(30);
+                    this.y = rand(scaleY(70), CANVAS_HEIGHT / 3 - scaleY(10));
+                    this.speed = rand(2.5, 4.5) * (1 + level * 0.12);
                     this.direction = Math.random() < 0.5 ? 1 : -1;
                     this.x = this.direction === 1 ? -this.width : CANVAS_WIDTH + this.width;
                     this.active = true;
-                    this.missileLaunchCooldown = 30; // Faster launch rate
+                    this.missileLaunchCooldown = 30;
                     this.currentMissileCooldown = rand(5, this.missileLaunchCooldown);
-                    this.missilesToLaunch = rand(2, 6); // Double missiles
+                    this.missilesToLaunch = rand(2, 6);
                     this.exploded = false;
                     this.explodeRadius = 0;
                 }
@@ -1635,7 +1659,7 @@
                                 this.x, this.y, 0,
                                 this.x, this.y, this.explodeRadius
                             );
-                            gradient.addColorStop(0, 'rgba(255, 50, 0, 0.9)'); // Fiery explosion
+                            gradient.addColorStop(0, 'rgba(255, 50, 0, 0.9)');
                             gradient.addColorStop(0.5, 'rgba(200, 0, 0, 0.7)');
                             gradient.addColorStop(1, 'rgba(100, 0, 0, 0)');
                             
@@ -1647,19 +1671,19 @@
                         return;
                     }
 
-                    ctx.fillStyle = '#304030'; // Dark green camouflage
+                    ctx.fillStyle = '#304030';
                     // Main body
                     ctx.beginPath();
                     ctx.moveTo(this.x, this.y);
                     ctx.lineTo(this.x - (this.direction * this.width * 0.8), this.y - this.height / 2);
-                    ctx.lineTo(this.x - (this.direction * this.width), this.y - this.height / 2 + 5);
-                    ctx.lineTo(this.x - (this.direction * this.width), this.y + this.height / 2 - 5);
+                    ctx.lineTo(this.x - (this.direction * this.width), this.y - this.height / 2 + scaleValue(5));
+                    ctx.lineTo(this.x - (this.direction * this.width), this.y + this.height / 2 - scaleValue(5));
                     ctx.lineTo(this.x - (this.direction * this.width * 0.8), this.y + this.height / 2);
                     ctx.closePath();
                     ctx.fill();
 
                     // Wings (sharp, camouflaged)
-                    ctx.fillStyle = '#203020'; // Even darker green for wings
+                    ctx.fillStyle = '#203020';
                     ctx.beginPath();
                     ctx.moveTo(this.x - (this.direction * this.width * 0.3), this.y);
                     ctx.lineTo(this.x - (this.direction * (this.width * 0.3 + 30)), this.y + 18 * this.direction);
@@ -1671,9 +1695,9 @@
                     // Cockpit/Sensor (subtle red glow)
                     ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
                     ctx.beginPath();
-                    ctx.arc(this.x - (this.direction * this.width * 0.15), this.y, 4, 0, Math.PI * 2);
+                    ctx.arc(this.x - (this.direction * this.width * 0.15), this.y, scaleValue(4), 0, Math.PI * 2);
                     ctx.shadowColor = 'red';
-                    ctx.shadowBlur = 8;
+                    ctx.shadowBlur = scaleValue(8);
                     ctx.fill();
                     ctx.shadowBlur = 0;
                 }
@@ -1683,8 +1707,8 @@
                     
                     if (!this.active) {
                         if (this.exploded) {
-                            this.explodeRadius += 2.5; // Fast explosion
-                            if (this.explodeRadius > 100) { // Large explosion radius
+                            this.explodeRadius += scaleValue(2.5);
+                            if (this.explodeRadius > scaleValue(100)) {
                                 this.exploded = false;
                             }
                         }
@@ -1699,11 +1723,11 @@
                         if (this.currentMissileCooldown <= 0) {
                             const targets = viableTargets();
                             if (targets.length > 0) {
-                                enemyMissiles.push(new EnemyMissile(targets, true, 1.5, true, this.x, this.y)); // Faster missiles
+                                enemyMissiles.push(new EnemyMissile(targets, true, 1.5, true, this.x, this.y));
                                 this.missilesToLaunch--;
                                 playSound('shoot');
                             }
-                            this.currentMissileCooldown = rand(15, this.missileLaunchCooldown); // Reset cooldown
+                            this.currentMissileCooldown = rand(15, this.missileLaunchCooldown);
                         }
                     }
 
@@ -1718,13 +1742,12 @@
                 hit() {
                     this.active = false;
                     this.exploded = true;
-                    score += 2000 * getMultiplier(); // Very high bonus
-                    citiesImmune = true; // Activate city immunity for the rest of the wave
+                    score += 2000 * getMultiplier();
+                    citiesImmune = true;
                     playSound('explosion');
                     console.log(`Killer Plane shot down! Cities are now immune for this wave!`);
                 }
             }
-
 
             // Explode other missiles in radius
             function explodeOtherMissiles(missile, ctx) {
@@ -1746,10 +1769,9 @@
                             Math.pow(missile.x - enemyPlane.x, 2) +
                             Math.pow(missile.y - enemyPlane.y, 2)
                         );
-                        // Slightly increase the detection radius for the plane to make it easier to hit
-                        if (distanceToPlane < missile.explodeRadius + 20) { 
+                        if (distanceToPlane < missile.explodeRadius + scaleValue(20)) { 
                             enemyPlane.hit();
-                            enemyPlane = null; // Remove the plane once hit
+                            enemyPlane = null;
                         }
                     }
 
@@ -1759,59 +1781,59 @@
                             Math.pow(missile.x - spyPlane.x, 2) +
                             Math.pow(missile.y - spyPlane.y, 2)
                         );
-                        if (distanceToSpyPlane < missile.explodeRadius + 15) { // Smaller radius for smaller plane
+                        if (distanceToSpyPlane < missile.explodeRadius + scaleValue(15)) {
                             spyPlane.hit();
-                            spyPlane = null; // Remove the spy plane once hit
+                            spyPlane = null;
                         }
                     }
 
-                    // Check if the player missile's explosion hits the stealth plane (NEW)
+                    // Check if the player missile's explosion hits the stealth plane
                     if (stealthPlane && stealthPlane.active) {
                         const distanceToStealthPlane = Math.sqrt(
                             Math.pow(missile.x - stealthPlane.x, 2) +
                             Math.pow(missile.y - stealthPlane.y, 2)
                         );
-                        if (distanceToStealthPlane < missile.explodeRadius + 10) { // Even smaller radius, harder to hit
+                        if (distanceToStealthPlane < missile.explodeRadius + scaleValue(10)) {
                             stealthPlane.hit();
-                            stealthPlane = null; // Remove the stealth plane once hit
+                            stealthPlane = null;
                         }
                     }
 
-                    // Check if the player missile's explosion hits the cargo plane (NEW)
+                    // Check if the player missile's explosion hits the cargo plane
                     if (cargoPlane && cargoPlane.active) {
                         const distanceToCargoPlane = Math.sqrt(
                             Math.pow(missile.x - cargoPlane.x, 2) +
                             Math.pow(missile.y - cargoPlane.y, 2)
                         );
-                        if (distanceToCargoPlane < missile.explodeRadius + 25) { // Larger radius due to larger size
+                        if (distanceToCargoPlane < missile.explodeRadius + scaleValue(25)) {
                             cargoPlane.hit();
-                            cargoPlane = null; // Remove the cargo plane once hit
+                            cargoPlane = null;
                         }
                     }
 
-                    // Check if the player missile's explosion hits the killer plane (NEW)
+                    // Check if the player missile's explosion hits the killer plane
                     if (killerPlane && killerPlane.active) {
                         const distanceToKillerPlane = Math.sqrt(
                             Math.pow(missile.x - killerPlane.x, 2) +
                             Math.pow(missile.y - killerPlane.y, 2)
                         );
-                        if (distanceToKillerPlane < missile.explodeRadius + 20) { // Decent radius for a large target
+                        if (distanceToKillerPlane < missile.explodeRadius + scaleValue(20)) {
                             killerPlane.hit();
-                            killerPlane = null; // Remove the killer plane once hit
+                            killerPlane = null;
                         }
                     }
                 }
             }
 
-            // NUEVO: Función para verificar el bonus de reconstrucción de avión
+            // Función para verificar el bonus de reconstrucción de avión
             function checkPlaneReconstructionBonus() {
                 if (planesShotDownThisLevel >= 3) {
                     reconstructRandomDestroyedStructure();
-                    planesShotDownThisLevel = 0; // Reiniciar el contador después del bonus
+                    planesShotDownThisLevel = 0;
                 }
             }
 
-            // NUEVO: Función para reconstruir una estructura aleatoria destruida
+            // Función para reconstruir una estructura aleatoria destruida
             function reconstructRandomDestroyedStructure() {
                 const destroyedCities = cities.filter(city => !city.active);
                 const destroyedBatteries = antiMissileBatteries.filter(battery => !battery.active);
@@ -1822,18 +1844,17 @@
                     const structureToRebuild = allDestroyed[rand(0, allDestroyed.length - 1)];
                     if (structureToRebuild instanceof City) {
                         structureToRebuild.active = true;
-                        reconstructedCount++; // Incrementar contador de reconstrucciones
+                        reconstructedCount++;
                         console.log("¡Ciudad reconstruida por derribar 3 aviones!");
                     } else if (structureToRebuild instanceof AntiMissileBattery) {
                         structureToRebuild.active = true;
-                        structureToRebuild.health = 3; // Restaurar salud completa
-                        structureToRebuild.missilesLeft = 10; // Recargar misiles
-                        reconstructedCount++; // Incrementar contador de reconstrucciones
+                        structureToRebuild.health = 3;
+                        structureToRebuild.missilesLeft = 10;
+                        reconstructedCount++;
                         console.log("¡Lanzadera reconstruida por derribar 3 aviones!");
                     }
                 }
             }
-
 
             // Get viable targets for enemy missiles
             function viableTargets() {
@@ -1846,15 +1867,13 @@
                             targets.push([amb.x, amb.y - amb.height, amb]);
                         }
                     });
-                    // If no batteries are active and cities are immune, the missiles have nowhere to go.
-                    // This could lead to a stalemate or strange behavior. For now, they will just try to go to a random spot on the ground.
                     if (targets.length === 0) {
-                        targets.push([rand(0, CANVAS_WIDTH), CANVAS_HEIGHT - GROUND_HEIGHT + 10, null]); // Random spot on ground
+                        targets.push([rand(0, CANVAS_WIDTH), CANVAS_HEIGHT - GROUND_HEIGHT + scaleValue(10), null]);
                     }
                 } else {
                     cities.forEach(city => {
                         if(city.active) {
-                            targets.push([city.x, city.y - city.height + 10, city]);
+                            targets.push([city.x, city.y - city.height + scaleValue(10), city]);
                         }
                     });
 
@@ -1864,7 +1883,6 @@
 
                     if(Math.random() < (level * 0.05)) { 
                         antiMissileBatteries.forEach(amb => {
-                            // Only attack active batteries
                             if (amb.active) { 
                                 targets.push([amb.x, amb.y - amb.height, amb]);
                             }
@@ -1893,7 +1911,7 @@
                 if (enemyPlane && enemyPlane.active) {
                     enemyPlane.update();
                     enemyPlane.draw();
-                } else if (enemyPlane && enemyPlane.exploded) { // Draw plane explosion
+                } else if (enemyPlane && enemyPlane.exploded) {
                     enemyPlane.update();
                     enemyPlane.draw();
                 }
@@ -1902,12 +1920,12 @@
                 if (spyPlane && spyPlane.active) {
                     spyPlane.update();
                     spyPlane.draw();
-                } else if (spyPlane && spyPlane.exploded) { // Draw spy plane explosion
+                } else if (spyPlane && spyPlane.exploded) {
                     spyPlane.update();
                     spyPlane.draw();
                 }
 
-                // Update and draw the stealth plane if active (NEW)
+                // Update and draw the stealth plane if active
                 if (stealthPlane && stealthPlane.active) {
                     stealthPlane.update();
                     stealthPlane.draw();
@@ -1916,7 +1934,7 @@
                     stealthPlane.draw();
                 }
 
-                // Update and draw the cargo plane if active (NEW)
+                // Update and draw the cargo plane if active
                 if (cargoPlane && cargoPlane.active) {
                     cargoPlane.update();
                     cargoPlane.draw();
@@ -1925,7 +1943,7 @@
                     cargoPlane.draw();
                 }
 
-                // Update and draw the killer plane if active (NEW)
+                // Update and draw the killer plane if active
                 if (killerPlane && killerPlane.active) {
                     killerPlane.update();
                     killerPlane.draw();
@@ -1938,14 +1956,14 @@
                 if (waveActive && enemyMissiles.length === 0 && 
                     (!enemyPlane || !enemyPlane.active && !enemyPlane.exploded) && 
                     (!spyPlane || !spyPlane.active && !spyPlane.exploded) && 
-                    (!stealthPlane || !stealthPlane.active && !stealthPlane.exploded) && // NEW
-                    (!cargoPlane || !cargoPlane.active && !cargoPlane.exploded) && // NEW
-                    (!killerPlane || !killerPlane.active && !killerPlane.exploded) // NEW
+                    (!stealthPlane || !stealthPlane.active && !stealthPlane.exploded) &&
+                    (!cargoPlane || !cargoPlane.active && !cargoPlane.exploded) &&
+                    (!killerPlane || !killerPlane.active && !killerPlane.exploded)
                 ) {
                     waveActive = false;
                     stopLevel();
                     setTimeout(() => {
-                        citiesImmune = false; // Reset city immunity after wave ends
+                        citiesImmune = false;
                         if (currentWave < WAVES_PER_LEVEL) { 
                             startNextWave();
                         } else { 
@@ -1962,14 +1980,13 @@
 
             // Spawns an enemy plane
             function spawnEnemyPlane() {
-                // Possibility for a plane to appear, only if no active one and we haven't reached the limit per level
                 if (!enemyPlane && planesPerLevel < MAX_PLANES_PER_LEVEL) {
-                    if (Math.random() < 0.3 + (level * 0.05)) { // 30% probability + 5% per level
+                    if (Math.random() < 0.3 + (level * 0.05)) {
                         setTimeout(() => {
                             enemyPlane = new EnemyPlane();
                             planesPerLevel++;
                             console.log(`Enemy plane appearing. Planes this level: ${planesPerLevel}`);
-                        }, rand(2000, 5000)); // Appears after 2-5 seconds
+                        }, rand(2000, 5000));
                     }
                 }
             }
@@ -1977,68 +1994,63 @@
             // Spawns a spy plane
             function spawnSpyPlane() {
                 if (!spyPlane && spyPlanesAppearedThisLevel < MAX_SPY_PLANES_PER_LEVEL) {
-                    if (Math.random() < 0.15 + (level * 0.02)) { // 15% probability + 2% per level (lower than enemy plane)
+                    if (Math.random() < 0.15 + (level * 0.02)) {
                         setTimeout(() => {
                             spyPlane = new SpyPlane();
-                            spyPlanesAppearedThisLevel++; // Increment count
+                            spyPlanesAppearedThisLevel++;
                             console.log(`Spy plane appearing! Spy planes this level: ${spyPlanesAppearedThisLevel}`);
-                        }, rand(4000, 8000)); // Appears after 4-8 seconds
+                        }, rand(4000, 8000));
                     }
                 }
             }
 
-            // Spawns a stealth plane (NEW)
+            // Spawns a stealth plane
             function spawnStealthPlane() {
-                // Stealth plane appears randomly between waves 5 and 10
                 if (currentWave >= 5 && currentWave <= 10 && !stealthPlane && !stealthPlaneSpawnedThisLevel) {
-                    if (Math.random() < 0.20) { // 20% chance to spawn in eligible waves
+                    if (Math.random() < 0.20) {
                         setTimeout(() => {
                             stealthPlane = new StealthPlane();
-                            stealthPlaneSpawnedThisLevel = true; // Set flag to true once spawned this level
+                            stealthPlaneSpawnedThisLevel = true;
                             console.log(`Stealth plane appearing in Wave ${currentWave}!`);
                         }, rand(4000, 7000)); 
                     }
                 }
             }
 
-            // Spawns a cargo plane (NEW)
+            // Spawns a cargo plane
             function spawnCargoPlane() {
-                // Cargo plane appears randomly between waves 2 and 6
                 if (currentWave >= 2 && currentWave <= 6 && !cargoPlane && !cargoPlaneSpawnedThisLevel) {
-                    if (Math.random() < 0.30) { // 30% chance to spawn in eligible waves
+                    if (Math.random() < 0.30) {
                         setTimeout(() => {
                             cargoPlane = new CargoPlane();
-                            cargoPlaneSpawnedThisLevel = true; // Set flag to true once spawned this level
+                            cargoPlaneSpawnedThisLevel = true;
                             console.log(`Cargo plane appearing in Wave ${currentWave}!`);
                         }, rand(5000, 9000)); 
                     }
                 }
             }
 
-            // Spawns a Killer Plane (NEW)
+            // Spawns a Killer Plane
             function spawnKillerPlane() {
-                // Killer plane appears randomly between waves 6 and 10
                 if (currentWave >= 6 && currentWave <= 10 && !killerPlane && !killerPlaneSpawnedThisLevel) {
-                    if (Math.random() < 0.25) { // 25% chance to spawn in eligible waves
+                    if (Math.random() < 0.25) {
                         setTimeout(() => {
                             killerPlane = new KillerPlane();
-                            killerPlaneSpawnedThisLevel = true; // Set flag to true once spawned this level
+                            killerPlaneSpawnedThisLevel = true;
                             console.log(`Killer plane appearing in Wave ${currentWave}!`);
                         }, rand(6000, 10000)); 
                     }
                 }
             }
 
-
             // Check for end of level
             function checkEndLevel() {
-                // Consider all planes for wave/level end
                 if(enemyMissiles.length === 0 && 
                     (!enemyPlane || !enemyPlane.active && !enemyPlane.exploded) && 
                     (!spyPlane || !spyPlane.active && !spyPlane.exploded) && 
-                    (!stealthPlane || !stealthPlane.active && !stealthPlane.exploded) && // NEW
-                    (!cargoPlane || !cargoPlane.active && !cargoPlane.exploded) && // NEW
-                    (!killerPlane || !killerPlane.active && !killerPlane.exploded) // NEW
+                    (!stealthPlane || !stealthPlane.active && !stealthPlane.exploded) &&
+                    (!cargoPlane || !cargoPlane.active && !cargoPlane.exploded) &&
+                    (!killerPlane || !killerPlane.active && !killerPlane.exploded)
                 ) {
                     stopLevel();
                     gameContainer.removeEventListener('click', handleShoot);
@@ -2048,11 +2060,10 @@
                     const missilesLeft = totalMissilesLeft();
                     const citiesSaved = totalCitiesSaved();
 
-                    // The game over condition by cities is moved to checkAllCitiesDestroyed
                     if(citiesSaved === 0) {
-                        endGame(missilesLeft); // This should be unreachable if checkAllCitiesDestroyed works
+                        endGame(missilesLeft);
                     } else {
-                        endLevel(missilesLeft, citiesSaved, planesShotDownThisLevel, reconstructedCount, spyPlaneWaveMissileBonus, stealthPlaneExplosionBonus === 2, cargoPlaneEnemyMissileReduction, citiesImmune); // Pass new parameters
+                        endLevel(missilesLeft, citiesSaved, planesShotDownThisLevel, reconstructedCount, spyPlaneWaveMissileBonus, stealthPlaneExplosionBonus === 2, cargoPlaneEnemyMissileReduction, citiesImmune);
                     }
                 }
             }
@@ -2060,21 +2071,20 @@
             // Function to check if all cities have been destroyed
             function checkAllCitiesDestroyed() {
                 if (totalCitiesSaved() === 0) {
-                    stopLevel(); // Stop the game loop
-                    gameContainer.removeEventListener('click', handleShoot); // Deactivate shooting
-                    gameContainer.removeEventListener('mousemove', handleMouseMove); // Deactivate crosshair movement
-                    crosshair.style.display = 'none'; // Hide crosshair
-                    endGame(totalMissilesLeft()); // End the game
+                    stopLevel();
+                    gameContainer.removeEventListener('click', handleShoot);
+                    gameContainer.removeEventListener('mousemove', handleMouseMove);
+                    crosshair.style.display = 'none';
+                    endGame(totalMissilesLeft());
                 }
             }
 
-
             // Handle end of level
-            function endLevel(missilesLeft, citiesSaved, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthBonusActive, cargoMissileReduction, killerPlaneImmunityActive) { // Added killerPlaneImmunityActive
+            function endLevel(missilesLeft, citiesSaved, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthBonusActive, cargoMissileReduction, killerPlaneImmunityActive) {
                 const missilesBonus = missilesLeft * 5 * getMultiplier();
                 const citiesBonus = citiesSaved * 100 * getMultiplier();
 
-                drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthBonusActive, cargoMissileReduction, killerPlaneImmunityActive); // Pass new parameters
+                drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthBonusActive, cargoMissileReduction, killerPlaneImmunityActive);
 
                 setTimeout(() => {
                     score += missilesBonus + citiesBonus;
@@ -2085,25 +2095,23 @@
 
             // Setup next level
             function setupNextLevel() {
-                const previousScore = score; // Save score before adding end-of-level bonuses
+                const previousScore = score;
                 level++; 
-                planesPerLevel = 0; // Reset plane counter for the new level
-                planesShotDownThisLevel = 0; // Reiniciar contador de aviones derribados en el nuevo nivel
-                reconstructedCount = 0; // Reiniciar contador de reconstrucciones para el nuevo nivel
-                spyPlanesAppearedThisLevel = 0; // Reset spy plane count for the new level
-                spyPlaneWaveMissileBonus = 0; // Reset spy plane missile bonus for the new level
-                extraMissilesFromSpyPlane = 0; // Reset bonus missiles from spy plane for the new level
-                stealthPlanesAppearedThisLevel = 0; // Reset stealth plane count for the new level
-                stealthPlaneExplosionBonus = 1; // Reset bonus for the new level
-                stealthPlaneSpawnedThisLevel = false; // Reset flag for new level
-                cargoPlanesAppearedThisLevel = 0; // Reset cargo plane count for the new level
-                cargoPlaneEnemyMissileReduction = 0; // Reset bonus
-                cargoPlaneSpawnedThisLevel = false; // Reset flag for new level
-                killerPlanesAppearedThisLevel = 0; // Reset killer plane count for the new level
-                citiesImmune = false; // Reset city immunity for the new level
-                killerPlaneSpawnedThisLevel = false; // Reset flag for new level
-                
-                // Reset power-ups for new level
+                planesPerLevel = 0;
+                planesShotDownThisLevel = 0;
+                reconstructedCount = 0;
+                spyPlanesAppearedThisLevel = 0;
+                spyPlaneWaveMissileBonus = 0;
+                extraMissilesFromSpyPlane = 0;
+                stealthPlanesAppearedThisLevel = 0;
+                stealthPlaneExplosionBonus = 1;
+                stealthPlaneSpawnedThisLevel = false;
+                cargoPlanesAppearedThisLevel = 0;
+                cargoPlaneEnemyMissileReduction = 0;
+                cargoPlaneSpawnedThisLevel = false;
+                killerPlanesAppearedThisLevel = 0;
+                citiesImmune = false;
+                killerPlaneSpawnedThisLevel = false;
                 immunityActive = false;
                 immunityWavesLeft = 0;
                 explosionBoostActive = false;
@@ -2116,29 +2124,27 @@
                     reduction: false
                 };
 
-                // LEVEL 1 TO 2 REWARD LOGIC (previous)
-                // Maintained, but rebuilding is now handled by the new general score logic.
-                if (level === 2 && totalCitiesSaved() === 6) { // If all cities were saved in level 1
+                // LEVEL 1 TO 2 REWARD LOGIC
+                if (level === 2 && totalCitiesSaved() === 6) {
                     bonusMissilesForNextWave = 10; 
                     console.log("10 extra missiles per battery for Level 2 for saving all cities!"); 
                 }
 
                 // NEW LOGIC: Rebuild a city if level score was > 3000
-                if (previousScore >= 3000) { // Evaluates the score from the PREVIOUS level
+                if (previousScore >= 3000) {
                     const destroyedCities = cities.filter(city => !city.active);
                     if (destroyedCities.length > 0) {
                         const cityToRebuild = destroyedCities[rand(0, destroyedCities.length - 1)];
                         cityToRebuild.active = true;
-                        reconstructedCount++; // This counts reconstructions from score as well
+                        reconstructedCount++;
                         console.log("City rebuilt due to high score!"); 
                     }
                 }
 
-
                 // Rebuild and repair all batteries for the new level
                 antiMissileBatteries.forEach(amb => {
-                    amb.active = true; // Activate battery
-                    amb.health = 3;    // Restore full health
+                    amb.active = true;
+                    amb.health = 3;
                 });
                 console.log("Launchers rebuilt and repaired!"); 
 
@@ -2165,7 +2171,6 @@
 
             // Get total missiles left
             function totalMissilesLeft() {
-                // Only count missiles from active batteries
                 return antiMissileBatteries.filter(amb => amb.active).reduce((total, amb) => total + amb.missilesLeft, 0);
             }
 
@@ -2213,17 +2218,15 @@
 
             // Determine which anti-missile battery to use
             function whichAntiMissileBattery(x) {
-                // Modified to prioritize active batteries
                 const getUsableBattery = (indices) => {
                     for (const index of indices) {
                         if (antiMissileBatteries[index].hasMissile()) {
                             return index;
                         }
                     }
-                    return -1; // No usable battery found
+                    return -1;
                 };
 
-                // Check if any battery is active and has missiles
                 if(!antiMissileBatteries.some(amb => amb.hasMissile())) {
                     return -1;
                 }
@@ -2250,13 +2253,11 @@
                 playerShoot(event.clientX, event.clientY);
             }
 
-            // Toggle sound function for key press (button removed)
+            // Toggle sound function for key press
             function toggleSound() {
                 soundEnabled = !soundEnabled;
                 const soundStatus = soundEnabled ? 'ON' : 'OFF';
                 console.log(`Sound: ${soundStatus}`);
-                // You might want to update the splash screen text here if it's visible,
-                // or provide some other visual feedback to the user.
             }
 
             // Toggle pause function
@@ -2324,7 +2325,7 @@
                 }
             }
 
-            // Simple sound effects (add sounds if you have the base64 data for 'batteryDestroyed' and 'hit')
+            // Simple sound effects
             function playSound(type) {
                 if(!soundEnabled || typeof Audio === 'undefined') return;
                 
@@ -2332,19 +2333,15 @@
                     let sound;
                     switch(type) {
                         case 'shoot':
-                            // Data for a short, sharp shooting sound
                             sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR6AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
                             break;
                         case 'gameOver':
-                            // Data for a game over sound (usually a low, sustained tone or a series of tones)
                             sound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
                             break;
-                        case 'batteryDestroyed': // Opcional: Sonido para cuando una batería es destruida
-                            // sound = new Audio('data:audio/wav;base64,...'); 
+                        case 'batteryDestroyed':
                             console.log('Battery Destroyed Sound Placeholder');
                             break;
-                        case 'hit': // Opcional: Sonido para cuando una batería es golpeada pero no destruida
-                            // sound = new Audio('data:audio/wav;base64,...');
+                        case 'hit':
                             console.log('Battery Hit Sound Placeholder');
                             break;
                     }
