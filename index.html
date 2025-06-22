@@ -146,7 +146,6 @@
                 <p>Defend your cities from the enemy missile rain!</p>
                 <p>Move the mouse to aim and click to launch a defensive missile.</p>
                 <p>Each battery has limited missiles, use them strategically!</p>
-                <p>Press 'S' to toggle sound ON/OFF.</p>
                 <p>Press 'P' to pause the game.</p>
                 <p>Press 'I' to activate city immunity for 3 waves (once per level).</p>
                 <p>Press 'R' to double missile explosion radius for 5 waves (once per level).</p>
@@ -159,7 +158,6 @@
                 <h2>GAME PAUSED</h2>
                 <p>Press 'P' to resume</p>
                 <p>Controls:</p>
-                <p>S - Toggle Sound</p>
                 <p>I - City Immunity (3 waves)</p>
                 <p>R - Double Explosion Radius (5 waves)</p>
                 <p>M - Reduce Enemy Missiles (4 waves)</p>
@@ -242,7 +240,6 @@
             let enemyMissiles = [];
             let timerID;
             let gameStarted = false;
-            let soundEnabled = false;
             let gamePaused = false;
             let currentWave = 0;
             let waveActive = false;
@@ -326,7 +323,6 @@
                 waveActive = false;
                 gameStarted = false;
                 gamePaused = false;
-                soundEnabled = false;
                 bonusMissilesForNextWave = 0;
                 enemyPlane = null;
                 planesPerLevel = 0;
@@ -1173,7 +1169,6 @@
                             this.targetMissile.state = MISSILE.exploding;
                             score += 50 * getMultiplier();
                             lastBeamActivationTime = Date.now();
-                            playSound('shoot');
                         }
                     } else {
                         this.beamActive = false;
@@ -1275,7 +1270,6 @@
                                     if (targetBattery.health <= 0) {
                                         targetBattery.active = false;
                                         targetBattery.missilesLeft = 0;
-                                        playSound('batteryDestroyed');
                                         console.log('Battery destroyed!');
                                     }
                                 }
@@ -1346,8 +1340,6 @@
                     if(source === -1) return;
                     
                     playerMissiles.push(new PlayerMissile(source, canvasX, canvasY));
-                    
-                    playSound('shoot');
                 }
             }
 
@@ -1402,8 +1394,6 @@
                         this.y = this.endY;
                         this.state = MISSILE.exploding;
                         this.groundExplosion = true;
-                        
-                        playSound('explosion');
                     }
                     
                     if(this.state === MISSILE.active) {
@@ -1506,7 +1496,6 @@
                             if (targets.length > 0) {
                                 enemyMissiles.push(new EnemyMissile(targets, true, 1.2, true, this.x, this.y));
                                 this.missilesToLaunch--;
-                                playSound('shoot');
                             }
                             this.currentMissileCooldown = rand(30, this.missileLaunchCooldown);
                         }
@@ -1526,7 +1515,6 @@
                     score += 500 * getMultiplier();
                     planesShotDownThisLevel++;
                     checkPlaneReconstructionBonus();
-                    playSound('explosion');
                 }
             }
 
@@ -1618,7 +1606,6 @@
                     score += 750 * getMultiplier();
                     spyPlaneWaveMissileBonus += 2;
                     extraMissilesFromSpyPlane += 2;
-                    playSound('explosion');
                     console.log(`Spy Plane shot down! Missile bonus per wave increased by 2. Total bonus: ${spyPlaneWaveMissileBonus}`);
                 }
             }
@@ -1712,7 +1699,6 @@
                     this.exploded = true;
                     score += 1000 * getMultiplier();
                     stealthPlaneExplosionBonus = 2;
-                    playSound('explosion');
                     console.log(`Stealth Plane shot down! Missile explosion radius doubled!`);
                 }
             }
@@ -1814,7 +1800,6 @@
                     this.exploded = true;
                     score += 1200 * getMultiplier();
                     cargoPlaneEnemyMissileReduction = Math.min(2 * level, cargoPlaneEnemyMissileReduction + 2); 
-                    playSound('explosion');
                     console.log(`Cargo Plane shot down! Enemy missiles per wave reduced by 2 for the rest of the level!`);
                 }
             }
@@ -1909,7 +1894,6 @@
                             if (targets.length > 0) {
                                 enemyMissiles.push(new EnemyMissile(targets, true, 1.5, true, this.x, this.y));
                                 this.missilesToLaunch--;
-                                playSound('shoot');
                             }
                             this.currentMissileCooldown = rand(15, this.missileLaunchCooldown);
                         }
@@ -1928,7 +1912,6 @@
                     this.exploded = true;
                     score += 2000 * getMultiplier();
                     citiesImmune = true;
-                    playSound('explosion');
                     console.log(`Killer Plane shot down! Cities are now immune for this wave!`);
                 }
             }
@@ -2351,8 +2334,6 @@
                 score += missilesLeft * 5 * getMultiplier();
                 drawEndGame();
                 
-                playSound('gameOver');
-
                 const resetGame = () => {
                     document.removeEventListener('click', resetGame);
                     location.reload(); 
@@ -2445,13 +2426,6 @@
                 playerShoot(event.clientX, event.clientY);
             }
 
-            // Toggle sound function for key press
-            function toggleSound() {
-                soundEnabled = !soundEnabled;
-                const soundStatus = soundEnabled ? 'ON' : 'OFF';
-                console.log(`Sound: ${soundStatus}`);
-            }
-
             // Toggle pause function
             function togglePause() {
                 gamePaused = !gamePaused;
@@ -2519,9 +2493,7 @@
 
             // Handle key press for sound toggle and other functions
             function handleKeyPress(event) {
-                if (event.key === 's' || event.key === 'S') {
-                    toggleSound();
-                } else if (event.key === 'p' || event.key === 'P') {
+                if (event.key === 'p' || event.key === 'P') {
                     togglePause();
                 } else if (event.key === 'i' || event.key === 'I') {
                     activateImmunity();
@@ -2531,36 +2503,6 @@
                     activateEnemyReduction();
                 } else if (event.key === 'e' || event.key === 'E') {
                     activateIronBeam();
-                }
-            }
-
-            // Simple sound effects
-            function playSound(type) {
-                if(!soundEnabled || typeof Audio === 'undefined') return;
-                
-                try {
-                    let sound;
-                    switch(type) {
-                        case 'shoot':
-                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR6AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
-                            break;
-                        case 'gameOver':
-                            sound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
-                            break;
-                        case 'batteryDestroyed':
-                            console.log('Battery Destroyed Sound Placeholder');
-                            break;
-                        case 'hit':
-                            console.log('Battery Hit Sound Placeholder');
-                            break;
-                    }
-                    
-                    if(sound) {
-                        sound.volume = 0.3;
-                        sound.play().catch(e => console.log('Sound playback failed:', e));
-                    }
-                } catch(e) {
-                    console.log('Sound error:', e);
                 }
             }
 
