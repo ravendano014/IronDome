@@ -2,13 +2,14 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Iron Dome Enhanced</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iron Dome Enhanced</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            touch-action: manipulation;
         }
 
         body {
@@ -20,7 +21,7 @@
             height: 100vh;
             overflow: hidden;
             cursor: none;
-            touch-action: manipulation;
+            font-family: 'Arial', sans-serif;
         }
 
         .game-container {
@@ -28,10 +29,10 @@
             background-color: #000;
             border: 2px solid #444;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            width: 90vw;
-            height: calc(90vw * 0.75); /* Mantener relación de aspecto 4:3 */
-            max-width: calc(100vh * 1.333); /* Máximo basado en altura */
-            max-height: 90vh;
+            width: 95vw;
+            height: calc(95vw * 0.75);
+            max-width: calc(100vh * 1.333);
+            max-height: 95vh;
         }
 
         canvas {
@@ -55,10 +56,9 @@
         h1 {
             color: #0ff;
             text-align: center;
-            font-family: 'Arial', sans-serif;
-            font-size: 36px;
-            text-shadow: 0 0 10px #0ff;
-            margin-bottom: 10px;
+            font-size: 24px;
+            text-shadow: 0 0 5px #0ff;
+            margin-bottom: 5px;
         }
 
         /* Estilos para la pantalla de inicio */
@@ -76,29 +76,29 @@
             align-items: center;
             text-align: center;
             z-index: 1001;
-            font-family: 'Arial', sans-serif;
             cursor: pointer;
+            padding: 10px;
         }
 
         #splash-screen h2 {
             color: #0ff;
-            font-size: 4em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 15px #0ff;
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 8px #0ff;
         }
 
         #splash-screen p {
-            font-size: 1.5em;
-            margin: 5px 0;
+            font-size: 1em;
+            margin: 3px 0;
             color: #eee;
-            max-width: 70%;
+            max-width: 90%;
         }
 
         #splash-screen .click-to-start {
-            margin-top: 40px;
-            font-size: 2em;
+            margin-top: 20px;
+            font-size: 1.5em;
             color: #ff0;
-            text-shadow: 0 0 10px #ff0;
+            text-shadow: 0 0 5px #ff0;
             animation: pulse 1.5s infinite alternate;
         }
 
@@ -116,60 +116,18 @@
             justify-content: center;
             align-items: center;
             z-index: 1002;
-            font-family: 'Arial', sans-serif;
+            padding: 10px;
         }
 
         #pause-screen h2 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #0ff;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #0ff;
         }
 
         #pause-screen p {
-            font-size: 1.5em;
-            margin: 10px 0;
-        }
-
-        /* Controles móviles */
-        #mobile-controls {
-            position: fixed;
-            bottom: 10px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 10px;
-            z-index: 999;
-            display: none; /* Oculto por defecto, se muestra en móviles */
-        }
-
-        .mobile-btn {
-            background-color: rgba(0, 100, 150, 0.7);
-            color: #0ff;
-            border: 1px solid #0ff;
-            border-radius: 5px;
-            padding: 8px 12px;
-            font-family: 'Arial', sans-serif;
-            font-size: 14px;
-            text-shadow: 0 0 5px #0ff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            cursor: pointer;
-            user-select: none;
-            touch-action: manipulation;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        .mobile-btn:active {
-            background-color: rgba(0, 150, 200, 0.9);
-            transform: scale(0.95);
-        }
-
-        .mobile-btn.active {
-            background-color: rgba(0, 200, 255, 0.9);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            font-size: 1em;
+            margin: 5px 0;
         }
 
         @keyframes pulse {
@@ -177,18 +135,44 @@
             to { opacity: 0.5; }
         }
 
-        /* Media query para dispositivos móviles */
-        @media (max-width: 768px), (pointer:coarse) {
-            #mobile-controls {
+        /* Controles para móviles */
+        .mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            justify-content: space-around;
+            z-index: 999;
+        }
+
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 255, 255, 0.3);
+            border: 2px solid #0ff;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            text-align: center;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-controls {
                 display: flex;
             }
             
-            .crosshair {
-                display: none !important;
+            h1 {
+                font-size: 18px;
             }
             
-            body {
-                cursor: default;
+            .game-container {
+                width: 100vw;
+                height: calc(100vw * 0.75);
+                max-height: 80vh;
             }
         }
     </style>
@@ -202,39 +186,30 @@
             
             <div id="splash-screen">
                 <h2>Iron Dome Enhanced</h2>
-                <p>Defend your cities from the enemy missile rain!</p>
-                <p>Move the mouse to aim and click to launch a defensive missile.</p>
-                <p>Each battery has limited missiles, use them strategically!</p>
-                <p>Press 'S' to toggle sound ON/OFF.</p>
-                <p>Press 'P' to pause the game.</p>
-                <p>Press 'I' to activate city immunity for 3 waves (once per level).</p>
-                <p>Press 'R' to double missile explosion radius for 5 waves (once per level).</p>
-                <p>Press 'M' to reduce enemy missiles by 4 for 4 waves (once per level).</p>
-                <p>Press 'E' to activate Iron Beam Laser (Easter Egg)</p>
-                <p class="click-to-start">Click anywhere to start</p>
+                <p>Defiende tus ciudades de misiles enemigos</p>
+                <p>Toca para apuntar y disparar</p>
+                <p>Baterías tienen misiles limitados</p>
+                <p>Controles: P(Pausa), S(Sonido)</p>
+                <p>Power-ups: I(Inmunidad), R(Radio), M(Reducción)</p>
+                <p class="click-to-start">Toca para comenzar</p>
             </div>
 
             <div id="pause-screen">
-                <h2>GAME PAUSED</h2>
-                <p>Press 'P' to resume</p>
-                <p>Controls:</p>
-                <p>S - Toggle Sound</p>
-                <p>I - City Immunity (3 waves)</p>
-                <p>R - Double Explosion Radius (5 waves)</p>
-                <p>M - Reduce Enemy Missiles (4 waves)</p>
-                <p>E - Iron Beam Laser (Easter Egg)</p>
+                <h2>JUEGO PAUSADO</h2>
+                <p>Toca 'P' para continuar</p>
+                <p>Controles:</p>
+                <p>S - Sonido ON/OFF</p>
+                <p>I - Inmunidad (3 oleadas)</p>
+                <p>R - Doble radio (5 oleadas)</p>
+                <p>M - Menos misiles (4 oleadas)</p>
+            </div>
+            
+            <div class="mobile-controls">
+                <div class="mobile-btn" id="left-btn">IZQUIERDA</div>
+                <div class="mobile-btn" id="right-btn">DERECHA</div>
+                <div class="mobile-btn" id="shoot-btn">DISPARAR</div>
             </div>
         </div>
-    </div>
-
-    <!-- Controles móviles -->
-    <div id="mobile-controls">
-        <button class="mobile-btn" id="btn-sound">Sound: OFF</button>
-        <button class="mobile-btn" id="btn-pause">Pause</button>
-        <button class="mobile-btn" id="btn-immunity">Immunity</button>
-        <button class="mobile-btn" id="btn-explosion">Big Boom</button>
-        <button class="mobile-btn" id="btn-reduction">Fewer Enemies</button>
-        <button class="mobile-btn" id="btn-beam">Iron Beam</button>
     </div>
 
     <script>
@@ -247,14 +222,11 @@
             const splashScreen = document.getElementById('splash-screen');
             const pauseScreen = document.getElementById('pause-screen');
             
-            // Elementos de controles móviles
-            const mobileControls = document.getElementById('mobile-controls');
-            const btnSound = document.getElementById('btn-sound');
-            const btnPause = document.getElementById('btn-pause');
-            const btnImmunity = document.getElementById('btn-immunity');
-            const btnExplosion = document.getElementById('btn-explosion');
-            const btnReduction = document.getElementById('btn-reduction');
-            const btnBeam = document.getElementById('btn-beam');
+            // Detección de móvil
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const leftBtn = document.getElementById('left-btn');
+            const rightBtn = document.getElementById('right-btn');
+            const shootBtn = document.getElementById('shoot-btn');
 
             // Variables para dimensiones dinámicas
             let CANVAS_WIDTH = 800;
@@ -371,6 +343,11 @@
             let ironBeamLasers = [];
             let lastBeamActivationTime = 0;
             const BEAM_COOLDOWN = 1000; // 1 segundo entre activaciones
+            
+            // Variables para controles móviles
+            let touchX = CANVAS_WIDTH / 2;
+            let touchStartX = 0;
+            let isTouching = false;
 
             // Initialize game
             function initialize() {
@@ -441,26 +418,6 @@
                 ironBeamWavesLeft = 0;
                 ironBeamLasers = [];
                 lastBeamActivationTime = 0;
-                
-                // Actualizar estado de los botones
-                updateMobileButtons();
-            }
-
-            // Actualizar estado de los botones móviles
-            function updateMobileButtons() {
-                btnSound.textContent = `Sound: ${soundEnabled ? 'ON' : 'OFF'}`;
-                btnPause.textContent = gamePaused ? 'Resume' : 'Pause';
-                
-                // Actualizar estado de los power-ups
-                btnImmunity.classList.toggle('active', immunityActive);
-                btnExplosion.classList.toggle('active', explosionBoostActive);
-                btnReduction.classList.toggle('active', enemyReductionActive);
-                btnBeam.classList.toggle('active', ironBeamActive);
-                
-                // Deshabilitar power-ups ya usados
-                btnImmunity.disabled = powerUpUsedThisLevel.immunity && !immunityActive;
-                btnExplosion.disabled = powerUpUsedThisLevel.explosion && !explosionBoostActive;
-                btnReduction.disabled = powerUpUsedThisLevel.reduction && !enemyReductionActive;
             }
 
             function createCities() {
@@ -485,38 +442,82 @@
                         splashScreen.style.display = 'none';
                         gameStarted = true;
                         initializeLevel();
-                        gameContainer.addEventListener('click', handleShoot);
-                        gameContainer.addEventListener('mousemove', handleMouseMove);
-                        crosshair.style.display = 'block';
                         
-                        // Mostrar controles en móviles
-                        if (window.matchMedia('(max-width: 768px), (pointer:coarse)').matches) {
-                            mobileControls.style.display = 'flex';
+                        if (isMobile) {
+                            setupMobileControls();
+                        } else {
+                            gameContainer.addEventListener('click', handleShoot);
+                            gameContainer.addEventListener('mousemove', handleMouseMove);
+                            crosshair.style.display = 'block';
                         }
                     }
                 });
                 
                 document.addEventListener('keydown', handleKeyPress);
                 
-                // Event listeners para controles móviles
-                btnSound.addEventListener('click', toggleSound);
-                btnPause.addEventListener('click', togglePause);
-                btnImmunity.addEventListener('click', activateImmunity);
-                btnExplosion.addEventListener('click', activateExplosionBoost);
-                btnReduction.addEventListener('click', activateEnemyReduction);
-                btnBeam.addEventListener('click', activateIronBeam);
-                
-                // Evento táctil para disparar en móviles
-                gameContainer.addEventListener('touchstart', handleTouchShoot, { passive: false });
+                // Reiniciar juego al hacer clic en Game Over
+                document.addEventListener('click', (e) => {
+                    if (!gameStarted && cities.length > 0 && cities.every(c => !c.active)) {
+                        location.reload();
+                    }
+                });
             }
-
-            // Handle touch shoot
-            function handleTouchShoot(e) {
-                if (!gameStarted || gamePaused) return;
+            
+            // Configurar controles para móviles
+            function setupMobileControls() {
+                // Control táctil para movimiento
+                gameContainer.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isTouching = true;
+                    const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    touchStartX = touch.clientX - rect.left;
+                    touchX = touchStartX;
+                });
                 
-                e.preventDefault();
-                const touch = e.touches[0];
-                playerShoot(touch.clientX, touch.clientY);
+                gameContainer.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (isTouching) {
+                        const touch = e.touches[0];
+                        const rect = canvas.getBoundingClientRect();
+                        touchX = touch.clientX - rect.left;
+                        targetCrosshairX = touchX;
+                        targetCrosshairY = Math.min(touch.clientY - rect.top, CANVAS_HEIGHT - GROUND_HEIGHT - 50);
+                    }
+                });
+                
+                gameContainer.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    isTouching = false;
+                    // Disparar al levantar el dedo
+                    if (gameStarted && !gamePaused) {
+                        playerShoot(touchX, targetCrosshairY);
+                    }
+                });
+                
+                // Botones móviles
+                if (isMobile) {
+                    leftBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        touchX = Math.max(50, touchX - 30);
+                        targetCrosshairX = touchX;
+                    });
+                    
+                    rightBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        touchX = Math.min(CANVAS_WIDTH - 50, touchX + 30);
+                        targetCrosshairX = touchX;
+                    });
+                    
+                    shootBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        if (gameStarted && !gamePaused) {
+                            playerShoot(touchX, targetCrosshairY);
+                        }
+                    });
+                }
+                
+                crosshair.style.display = 'block';
             }
 
             // Initialize level
@@ -690,30 +691,30 @@
                 drawLevel();
                 drawPowerUpStatus();
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(300), scaleY(30));
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(150), scaleY(20));
                 updateCrosshairPosition();
             }
 
             // Draw power-up status
             function drawPowerUpStatus() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.font = `bold ${scaleValue(12)}px Arial`;
                 
                 if (immunityActive) {
-                    ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, scaleX(20), scaleY(60));
+                    ctx.fillText(`Immunity: ${immunityWavesLeft}`, scaleX(10), scaleY(40));
                 }
                 
                 if (explosionBoostActive) {
-                    ctx.fillText(`Explosion Boost: ${explosionBoostWavesLeft} waves`, scaleX(20), scaleY(90));
+                    ctx.fillText(`Explosion+: ${explosionBoostWavesLeft}`, scaleX(10), scaleY(60));
                 }
                 
                 if (enemyReductionActive) {
-                    ctx.fillText(`Enemy Reduction: ${enemyReductionWavesLeft} waves`, scaleX(20), scaleY(120));
+                    ctx.fillText(`Enemies-: ${enemyReductionWavesLeft}`, scaleX(10), scaleY(80));
                 }
                 
                 if (ironBeamActive) {
-                    ctx.fillText(`Iron Beam: ${ironBeamWavesLeft} waves`, scaleX(20), scaleY(150));
+                    ctx.fillText(`Iron Beam: ${ironBeamWavesLeft}`, scaleX(10), scaleY(100));
                 }
             }
 
@@ -734,11 +735,11 @@
                 ctx.fillRect(scaleX(100), scaleY(150), scaleX(600), scaleY(300));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText('DEFEND YOUR CITIES', CANVAS_WIDTH / 2, scaleY(200));
                 
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
                 ctx.fillText(`LEVEL ${level}`, CANVAS_WIDTH / 2, scaleY(250));
                 
                 ctx.fillStyle = '#ff0';
@@ -750,52 +751,50 @@
             // Draw score
             function drawScore() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Score: ${score}`, scaleX(70), scaleY(30));
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.fillText(`Score: ${score}`, scaleX(10), scaleY(20));
             }
 
             // Draw level
             function drawLevel() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(150), scaleY(30));
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(80), scaleY(20));
             }
 
             // Draw end level screen
-            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) {
+            function drawEndLevel(missilesLeft, missilesBonus, citiesSaved, citiesBonus, planesShotDown, structuresRebuilt, spyPlaneBonus, stealthPlaneBonusActive, cargoPlaneMissileReduction, killerPlaneImmunityActive) {
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(scaleX(100), scaleY(100), scaleX(600), scaleY(400));
+                ctx.fillRect(scaleX(50), scaleY(100), CANVAS_WIDTH - scaleX(100), scaleY(300));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(150));
+                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(140));
                 
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
-                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(180));
-                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(210));
-                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(240));
-                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(270));
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.fillText(`Missiles Left: ${missilesLeft} (+${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(170));
+                ctx.fillText(`Cities Saved: ${citiesSaved} (+${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(200));
+                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(230));
+                ctx.fillText(`Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(260));
+                
                 if (spyPlaneBonus > 0) {
-                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, scaleY(300));
+                    ctx.fillText(`Spy Bonus: +${spyPlaneBonus}`, CANVAS_WIDTH / 2, scaleY(290));
                 }
-                if (stealthBonusActive) {
-                    ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, scaleY(330));
+                if (stealthPlaneBonusActive) {
+                    ctx.fillText(`Explosion x2`, CANVAS_WIDTH / 2, scaleY(320));
                 }
                 if (cargoPlaneMissileReduction > 0) {
-                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction} Enemy Missiles/Wave!`, CANVAS_WIDTH / 2, scaleY(360));
+                    ctx.fillText(`Enemies -${cargoPlaneMissileReduction}`, CANVAS_WIDTH / 2, scaleY(350));
                 }
                 if (killerPlaneImmunityActive) {
-                    ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, scaleY(390));
-                }
-                if (ironBeamActive) {
-                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft} waves left!`, CANVAS_WIDTH / 2, scaleY(420));
+                    ctx.fillText(`Cities Immune`, CANVAS_WIDTH / 2, scaleY(380));
                 }
 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(450));
+                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(420));
                 
                 ctx.textAlign = 'left';
             }
@@ -806,15 +805,15 @@
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = `bold ${scaleValue(40)}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - scaleY(40));
-                
                 ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - scaleY(30));
+                
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
                 ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(20));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('CLICK TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
+                ctx.fillText('TAP TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(60));
                 
                 ctx.textAlign = 'left';
             }
@@ -1140,7 +1139,7 @@
 
                     // Missile count display (digital style)
                     ctx.fillStyle = '#0ff';
-                    ctx.font = `bold ${scaleValue(12)}px "Press Start 2P", cursive, monospace`;
+                    ctx.font = `bold ${scaleValue(10)}px "Press Start 2P", cursive, monospace`;
                     ctx.textAlign = 'center';
                     ctx.fillText(`${this.missilesLeft}`, this.x, hexTopY + scaleValue(10));
 
@@ -2574,7 +2573,6 @@
                 soundEnabled = !soundEnabled;
                 const soundStatus = soundEnabled ? 'ON' : 'OFF';
                 console.log(`Sound: ${soundStatus}`);
-                updateMobileButtons();
             }
 
             // Toggle pause function
@@ -2587,7 +2585,6 @@
                     pauseScreen.style.display = 'none';
                     startLevel();
                 }
-                updateMobileButtons();
             }
 
             // Activate city immunity power-up
@@ -2598,7 +2595,6 @@
                     citiesImmune = true;
                     powerUpUsedThisLevel.immunity = true;
                     console.log("City immunity activated for 3 waves!");
-                    updateMobileButtons();
                 } else {
                     console.log("Immunity power-up already used this level!");
                 }
@@ -2612,7 +2608,6 @@
                     stealthPlaneExplosionBonus = 2;
                     powerUpUsedThisLevel.explosion = true;
                     console.log("Explosion radius doubled for 5 waves!");
-                    updateMobileButtons();
                 } else {
                     console.log("Explosion boost power-up already used this level!");
                 }
@@ -2625,7 +2620,6 @@
                     enemyReductionWavesLeft = 4;
                     powerUpUsedThisLevel.reduction = true;
                     console.log("Enemy missiles reduced by 4 for 4 waves!");
-                    updateMobileButtons();
                 } else {
                     console.log("Enemy reduction power-up already used this level!");
                 }
@@ -2641,7 +2635,6 @@
                         new IronBeamLaser(scaleX(450), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT))
                     ];
                     console.log("Iron Beam Laser activated for 7 waves!");
-                    updateMobileButtons();
                 } else {
                     console.log("Iron Beam Laser is already active!");
                 }
@@ -2672,7 +2665,7 @@
                     let sound;
                     switch(type) {
                         case 'shoot':
-                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR6AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
+                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
                             break;
                         case 'gameOver':
                             sound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
