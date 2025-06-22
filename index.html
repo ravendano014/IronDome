@@ -151,6 +151,7 @@
                 <p>Press 'I' to activate city immunity for 3 waves (once per level).</p>
                 <p>Press 'R' to double missile explosion radius for 5 waves (once per level).</p>
                 <p>Press 'M' to reduce enemy missiles by 4 for 4 waves (once per level).</p>
+                <p>Press 'E' to activate Iron Beam Laser (Easter Egg)</p>
                 <p class="click-to-start">Click anywhere to start</p>
             </div>
 
@@ -162,6 +163,7 @@
                 <p>I - City Immunity (3 waves)</p>
                 <p>R - Double Explosion Radius (5 waves)</p>
                 <p>M - Reduce Enemy Missiles (4 waves)</p>
+                <p>E - Iron Beam Laser (Easter Egg)</p>
             </div>
         </div>
     </div>
@@ -284,6 +286,13 @@
                 explosion: false,
                 reduction: false
             };
+            
+            // Variables para el Easter Egg (Iron Beam Laser)
+            let ironBeamActive = false;
+            let ironBeamWavesLeft = 0;
+            let ironBeamLasers = [];
+            let lastBeamActivationTime = 0;
+            const BEAM_COOLDOWN = 1000; // 1 segundo entre activaciones
 
             // Initialize game
             function initialize() {
@@ -350,6 +359,10 @@
                     explosion: false,
                     reduction: false
                 };
+                ironBeamActive = false;
+                ironBeamWavesLeft = 0;
+                ironBeamLasers = [];
+                lastBeamActivationTime = 0;
             }
 
             function createCities() {
@@ -418,6 +431,14 @@
                     explosion: false,
                     reduction: false
                 };
+                
+                // Reiniciar Iron Beam si estaba activo
+                if (ironBeamActive) {
+                    ironBeamLasers = [
+                        new IronBeamLaser(scaleX(350), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)),
+                        new IronBeamLaser(scaleX(450), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT))
+                    ];
+                }
 
                 startNextWave(); 
             }
@@ -451,6 +472,15 @@
                     enemyReductionWavesLeft--;
                     if (enemyReductionWavesLeft <= 0) {
                         enemyReductionActive = false;
+                    }
+                }
+                
+                // Update Iron Beam counter
+                if (ironBeamActive) {
+                    ironBeamWavesLeft--;
+                    if (ironBeamWavesLeft <= 0) {
+                        ironBeamActive = false;
+                        ironBeamLasers = [];
                     }
                 }
 
@@ -557,6 +587,10 @@
                 if (enemyReductionActive) {
                     ctx.fillText(`Enemy Reduction: ${enemyReductionWavesLeft} waves`, scaleX(20), scaleY(120));
                 }
+                
+                if (ironBeamActive) {
+                    ctx.fillText(`Iron Beam: ${ironBeamWavesLeft} waves`, scaleX(20), scaleY(150));
+                }
             }
 
             // Update crosshair position smoothly
@@ -632,9 +666,12 @@
                 if (killerPlaneImmunityActive) {
                     ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, scaleY(390));
                 }
+                if (ironBeamActive) {
+                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft} waves left!`, CANVAS_WIDTH / 2, scaleY(420));
+                }
 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(420));
+                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(450));
                 
                 ctx.textAlign = 'left';
             }
@@ -674,6 +711,13 @@
                         amb.draw();
                     }
                 });
+                
+                // Draw Iron Beam Lasers if active
+                if (ironBeamActive) {
+                    ironBeamLasers.forEach(laser => {
+                        laser.draw();
+                    });
+                }
             }
 
             // Get score multiplier based on level
@@ -993,6 +1037,146 @@
                         ctx.strokeStyle = '#888';
                         ctx.lineWidth = scaleValue(1);
                         ctx.strokeRect(barX, barY, barWidth, barHeight);
+                    }
+                }
+            }
+
+            // Iron Beam Laser class (Easter Egg)
+            class IronBeamLaser {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.width = scaleValue(30);
+                    this.height = scaleValue(20);
+                    this.active = true;
+                    this.animationFrame = 0;
+                    this.targetMissile = null;
+                    this.beamActive = false;
+                    this.beamEndX = 0;
+                    this.beamEndY = 0;
+                    this.beamWidth = scaleValue(3);
+                }
+
+                draw() {
+                    if (!this.active) return;
+                    
+                    this.animationFrame++;
+                    
+                    // Base
+                    ctx.fillStyle = '#444';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(this.x - this.width / 2, this.y - this.height);
+                    ctx.lineTo(this.x + this.width / 2, this.y - this.height);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Laser emitter (rotating)
+                    ctx.save();
+                    ctx.translate(this.x, this.y - this.height / 2);
+                    
+                    // Only rotate if we have a target
+                    if (this.targetMissile) {
+                        const angle = Math.atan2(this.targetMissile.y - (this.y - this.height / 2), 
+                                            this.targetMissile.x - this.x);
+                        ctx.rotate(angle);
+                    } else {
+                        // Gentle idle rotation
+                        const idleAngle = Math.sin(this.animationFrame * 0.05) * 0.3;
+                        ctx.rotate(idleAngle);
+                    }
+                    
+                    // Emitter
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(-scaleValue(5), -scaleValue(2), scaleValue(10), scaleValue(4));
+                    
+                    // Glowing center
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, scaleValue(5));
+                    gradient.addColorStop(0, 'rgba(0, 255, 0, 0.8)');
+                    gradient.addColorStop(1, 'rgba(0, 100, 0, 0)');
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, scaleValue(5), 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                    
+                    // Draw beam if active
+                    if (this.beamActive) {
+                        const beamGradient = ctx.createLinearGradient(this.x, this.y - this.height / 2, this.beamEndX, this.beamEndY);
+                        beamGradient.addColorStop(0, 'rgba(0, 255, 0, 0.8)');
+                        beamGradient.addColorStop(0.5, 'rgba(0, 255, 100, 0.6)');
+                        beamGradient.addColorStop(1, 'rgba(0, 255, 0, 0)');
+                        
+                        ctx.strokeStyle = beamGradient;
+                        ctx.lineWidth = this.beamWidth;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y - this.height / 2);
+                        ctx.lineTo(this.beamEndX, this.beamEndY);
+                        ctx.stroke();
+                        
+                        // Add some glow
+                        ctx.shadowColor = '#0f0';
+                        ctx.shadowBlur = scaleValue(10);
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+                
+                update() {
+                    if (gamePaused) return;
+                    
+                    // Find closest enemy missile in range
+                    if (!this.targetMissile || !this.targetMissile.active || 
+                        this.targetMissile.state !== MISSILE.active || 
+                        Date.now() - lastBeamActivationTime < BEAM_COOLDOWN) {
+                        
+                        this.targetMissile = null;
+                        this.beamActive = false;
+                        
+                        // Find new target
+                        let closestMissile = null;
+                        let closestDistance = scaleValue(200); // Range of the laser
+                        
+                        enemyMissiles.forEach(missile => {
+                            if (missile.state === MISSILE.active) {
+                                const dx = missile.x - this.x;
+                                const dy = missile.y - (this.y - this.height / 2);
+                                const distance = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (distance < closestDistance) {
+                                    closestDistance = distance;
+                                    closestMissile = missile;
+                                }
+                            }
+                        });
+                        
+                        if (closestMissile) {
+                            this.targetMissile = closestMissile;
+                        }
+                    }
+                    
+                    // Activate beam if we have a target
+                    if (this.targetMissile && Date.now() - lastBeamActivationTime >= BEAM_COOLDOWN) {
+                        this.beamActive = true;
+                        this.beamEndX = this.targetMissile.x;
+                        this.beamEndY = this.targetMissile.y;
+                        this.beamWidth = scaleValue(3) + Math.sin(this.animationFrame * 0.2) * scaleValue(1);
+                        
+                        // Check if we've hit the missile
+                        const dx = this.beamEndX - this.x;
+                        const dy = this.beamEndY - (this.y - this.height / 2);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < scaleValue(210)) { // Slightly more than range to account for movement
+                            // Destroy the missile
+                            this.targetMissile.state = MISSILE.exploding;
+                            score += 50 * getMultiplier();
+                            lastBeamActivationTime = Date.now();
+                            playSound('shoot');
+                        }
+                    } else {
+                        this.beamActive = false;
                     }
                 }
             }
@@ -1952,6 +2136,14 @@
                     killerPlane.draw();
                 }
                 
+                // Update and draw Iron Beam Lasers if active
+                if (ironBeamActive) {
+                    ironBeamLasers.forEach(laser => {
+                        laser.update();
+                        laser.draw();
+                    });
+                }
+                
                 // Check if wave ended (considering all planes)
                 if (waveActive && enemyMissiles.length === 0 && 
                     (!enemyPlane || !enemyPlane.active && !enemyPlane.exploded) && 
@@ -2309,6 +2501,21 @@
                     console.log("Enemy reduction power-up already used this level!");
                 }
             }
+            
+            // Activate Iron Beam Laser (Easter Egg)
+            function activateIronBeam() {
+                if (!ironBeamActive) {
+                    ironBeamActive = true;
+                    ironBeamWavesLeft = 7;
+                    ironBeamLasers = [
+                        new IronBeamLaser(scaleX(350), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)),
+                        new IronBeamLaser(scaleX(450), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT))
+                    ];
+                    console.log("Iron Beam Laser activated for 7 waves!");
+                } else {
+                    console.log("Iron Beam Laser is already active!");
+                }
+            }
 
             // Handle key press for sound toggle and other functions
             function handleKeyPress(event) {
@@ -2322,6 +2529,8 @@
                     activateExplosionBoost();
                 } else if (event.key === 'm' || event.key === 'M') {
                     activateEnemyReduction();
+                } else if (event.key === 'e' || event.key === 'E') {
+                    activateIronBeam();
                 }
             }
 
