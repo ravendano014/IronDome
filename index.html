@@ -132,6 +132,19 @@
             from { opacity: 1; }
             to { opacity: 0.5; }
         }
+        
+        /* Tooltip para las habilidades */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #0ff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1003;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -140,6 +153,7 @@
         <div class="game-container">
             <canvas></canvas>
             <div class="crosshair"></div>
+            <div class="tooltip" id="battery-tooltip"></div>
             
             <div id="splash-screen">
                 <h2>Iron Dome Enhanced</h2>
@@ -147,10 +161,10 @@
                 <p>Move the mouse to aim and click to launch a defensive missile.</p>
                 <p>Each battery has limited missiles, use them strategically!</p>
                 <p>Press 'P' to pause the game.</p>
-                <p>Press 'I' to activate city immunity for 3 waves (once per level).</p>
-                <p>Press 'R' to double missile explosion radius for 5 waves (once per level).</p>
-                <p>Press 'M' to reduce enemy missiles by 4 for 4 waves (once per level).</p>
-                <p>Press 'E' to activate Iron Beam Laser (Easter Egg)</p>
+                <p>Double-click on batteries to activate special abilities:</p>
+                <p>- Left Battery: City Immunity (3 waves)</p>
+                <p>- Middle Battery: Double Explosion Radius (5 waves)</p>
+                <p>- Right Battery: Iron Beam Laser (7 waves)</p>
                 <p class="click-to-start">Click anywhere to start</p>
             </div>
 
@@ -158,10 +172,10 @@
                 <h2>GAME PAUSED</h2>
                 <p>Press 'P' to resume</p>
                 <p>Controls:</p>
-                <p>I - City Immunity (3 waves)</p>
-                <p>R - Double Explosion Radius (5 waves)</p>
-                <p>M - Reduce Enemy Missiles (4 waves)</p>
-                <p>E - Iron Beam Laser (Easter Egg)</p>
+                <p>Double-click batteries for special abilities:</p>
+                <p>Left - City Immunity (3 waves)</p>
+                <p>Middle - Double Explosion Radius (5 waves)</p>
+                <p>Right - Iron Beam Laser (7 waves)</p>
             </div>
         </div>
     </div>
@@ -175,6 +189,7 @@
             const crosshair = document.querySelector('.crosshair');
             const splashScreen = document.getElementById('splash-screen');
             const pauseScreen = document.getElementById('pause-screen');
+            const tooltip = document.getElementById('battery-tooltip');
 
             // Variables para dimensiones dinámicas
             let CANVAS_WIDTH = 800;
@@ -290,6 +305,10 @@
             let ironBeamLasers = [];
             let lastBeamActivationTime = 0;
             const BEAM_COOLDOWN = 1000; // 1 segundo entre activaciones
+            
+            // Variables para el doble clic
+            let lastClickTime = 0;
+            let clickCount = 0;
 
             // Initialize game
             function initialize() {
@@ -371,9 +390,12 @@
             }
 
             function createBatteries() {
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
+                // Left battery - Immunity
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'immunity'));
+                // Middle battery - Explosion boost
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'explosion'));
+                // Right battery - Iron Beam
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'laser'));
             }
 
             // Setup event listeners
@@ -383,12 +405,102 @@
                         splashScreen.style.display = 'none';
                         gameStarted = true;
                         initializeLevel();
-                        gameContainer.addEventListener('click', handleShoot);
+                        gameContainer.addEventListener('click', handleClick);
                         gameContainer.addEventListener('mousemove', handleMouseMove);
                         crosshair.style.display = 'block';
                     }
                 });
                 document.addEventListener('keydown', handleKeyPress);
+            }
+
+            // Handle click events (single and double)
+            function handleClick(event) {
+                const rect = canvas.getBoundingClientRect();
+                const canvasX = event.clientX - rect.left;
+                const canvasY = event.clientY - rect.top;
+                
+                // Check if click is on a battery
+                const batteryIndex = getBatteryAtPosition(canvasX, canvasY);
+                
+                if (batteryIndex !== -1) {
+                    const currentTime = new Date().getTime();
+                    
+                    if (currentTime - lastClickTime < 300) { // Double click
+                        clickCount = 0;
+                        activateBatteryAbility(batteryIndex);
+                    } else { // Single click
+                        clickCount = 1;
+                    }
+                    
+                    lastClickTime = currentTime;
+                    
+                    // If it's a single click, still handle it as a normal shot
+                    if (clickCount === 1) {
+                        setTimeout(() => {
+                            if (clickCount === 1) {
+                                playerShoot(event.clientX, event.clientY);
+                                clickCount = 0;
+                            }
+                        }, 300);
+                    }
+                } else {
+                    // Handle normal click for shooting
+                    playerShoot(event.clientX, event.clientY);
+                }
+            }
+            
+            // Get battery at position
+            function getBatteryAtPosition(x, y) {
+                for (let i = 0; i < antiMissileBatteries.length; i++) {
+                    const battery = antiMissileBatteries[i];
+                    const batteryLeft = battery.x - battery.width / 2;
+                    const batteryRight = battery.x + battery.width / 2;
+                    const batteryTop = battery.y - battery.height;
+                    const batteryBottom = battery.y;
+                    
+                    if (x >= batteryLeft && x <= batteryRight && 
+                        y >= batteryTop && y <= batteryBottom) {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+            
+            // Activate battery special ability
+            function activateBatteryAbility(batteryIndex) {
+                const battery = antiMissileBatteries[batteryIndex];
+                
+                if (!battery.active) {
+                    showTooltip("Battery destroyed!", battery.x, battery.y - battery.height);
+                    return;
+                }
+                
+                switch (battery.specialAbility) {
+                    case 'immunity':
+                        activateImmunity();
+                        showTooltip("Immunity activated! (3 waves)", battery.x, battery.y - battery.height);
+                        break;
+                    case 'explosion':
+                        activateExplosionBoost();
+                        showTooltip("Explosion boost activated! (5 waves)", battery.x, battery.y - battery.height);
+                        break;
+                    case 'laser':
+                        activateIronBeam();
+                        showTooltip("Iron Beam activated! (7 waves)", battery.x, battery.y - battery.height);
+                        break;
+                }
+            }
+            
+            // Show tooltip
+            function showTooltip(text, x, y) {
+                tooltip.textContent = text;
+                tooltip.style.left = `${x}px`;
+                tooltip.style.top = `${y - 30}px`;
+                tooltip.style.display = 'block';
+                
+                setTimeout(() => {
+                    tooltip.style.display = 'none';
+                }, 2000);
             }
 
             // Initialize level
@@ -872,7 +984,7 @@
 
             // Anti-missile battery class
             class AntiMissileBattery {
-                constructor(x, y) {
+                constructor(x, y, specialAbility) {
                     this.x = x;
                     this.y = y;
                     this.missilesLeft = 10;
@@ -882,6 +994,17 @@
                     this.health = 3;
                     this.radarAngle = 0;
                     this.animationFrame = 0;
+                    this.specialAbility = specialAbility; // 'immunity', 'explosion', or 'laser'
+                    this.specialColor = this.getSpecialColor();
+                }
+                
+                getSpecialColor() {
+                    switch(this.specialAbility) {
+                        case 'immunity': return '#ffff00'; // Yellow
+                        case 'explosion': return '#ff9900'; // Orange
+                        case 'laser': return '#00ff00'; // Green
+                        default: return '#0ff'; // Cyan
+                    }
                 }
 
                 hasMissile() {
@@ -973,7 +1096,7 @@
                         
                         // Missile inside silo
                         if (this.missilesLeft > i) {
-                            ctx.fillStyle = '#0f0';
+                            ctx.fillStyle = this.specialColor;
                             ctx.fillRect(currentSiloX + scaleValue(1), hexBaseY - siloHeight + scaleValue(5), siloWidth - scaleValue(2), siloHeight - scaleValue(8));
                             // Missile tip
                             ctx.beginPath();
@@ -1006,12 +1129,12 @@
                     ctx.save();
                     ctx.translate(radarCenterX, radarCenterY);
                     ctx.rotate(this.radarAngle * Math.PI / 180);
-                    ctx.fillStyle = '#0ff';
+                    ctx.fillStyle = this.specialColor;
                     ctx.fillRect(0, -scaleValue(1), radarRadius, scaleValue(2));
                     ctx.restore();
 
                     // Missile count display (digital style)
-                    ctx.fillStyle = '#0ff';
+                    ctx.fillStyle = this.specialColor;
                     ctx.font = `bold ${scaleValue(12)}px "Press Start 2P", cursive, monospace`;
                     ctx.textAlign = 'center';
                     ctx.fillText(`${this.missilesLeft}`, this.x, hexTopY + scaleValue(10));
@@ -1034,6 +1157,20 @@
                         ctx.lineWidth = scaleValue(1);
                         ctx.strokeRect(barX, barY, barWidth, barHeight);
                     }
+                    
+                    // Special ability indicator
+                    ctx.fillStyle = this.specialColor;
+                    ctx.font = `bold ${scaleValue(10)}px Arial`;
+                    ctx.textAlign = 'center';
+                    
+                    let abilityText = '';
+                    switch(this.specialAbility) {
+                        case 'immunity': abilityText = 'IMMUNITY'; break;
+                        case 'explosion': abilityText = 'BOOST'; break;
+                        case 'laser': abilityText = 'LASER'; break;
+                    }
+                    
+                    ctx.fillText(abilityText, this.x, baseY + scaleValue(25));
                 }
             }
 
@@ -1293,7 +1430,7 @@
                         startY: amb.y,
                         endX: endX,
                         endY: endY,
-                        color: '#0f0',
+                        color: amb.specialColor,
                         trailColor: 'rgba(0, 255, 255, 0.7)',
                         speedFactor: speedFactor,
                         explosionSizeMultiplier: stealthPlaneExplosionBonus
@@ -2228,7 +2365,7 @@
                     (!killerPlane || !killerPlane.active && !killerPlane.exploded)
                 ) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleShoot);
+                    gameContainer.removeEventListener('click', handleClick);
                     gameContainer.removeEventListener('mousemove', handleMouseMove);
                     crosshair.style.display = 'none';
                     
@@ -2247,7 +2384,7 @@
             function checkAllCitiesDestroyed() {
                 if (totalCitiesSaved() === 0) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleShoot);
+                    gameContainer.removeEventListener('click', handleClick);
                     gameContainer.removeEventListener('mousemove', handleMouseMove);
                     crosshair.style.display = 'none';
                     endGame(totalMissilesLeft());
@@ -2324,7 +2461,7 @@
                 console.log("Launchers rebuilt and repaired!"); 
 
                 initializeLevel(); 
-                gameContainer.addEventListener('click', handleShoot);
+                gameContainer.addEventListener('click', handleClick);
                 gameContainer.addEventListener('mousemove', handleMouseMove);
                 crosshair.style.display = 'block';
             }
@@ -2421,11 +2558,6 @@
                 targetCrosshairY = event.clientY - rect.top;
             }
 
-            // Handle shoot event 
-            function handleShoot(event) {
-                playerShoot(event.clientX, event.clientY);
-            }
-
             // Toggle pause function
             function togglePause() {
                 gamePaused = !gamePaused;
@@ -2495,14 +2627,6 @@
             function handleKeyPress(event) {
                 if (event.key === 'p' || event.key === 'P') {
                     togglePause();
-                } else if (event.key === 'i' || event.key === 'I') {
-                    activateImmunity();
-                } else if (event.key === 'r' || event.key === 'R') {
-                    activateExplosionBoost();
-                } else if (event.key === 'm' || event.key === 'M') {
-                    activateEnemyReduction();
-                } else if (event.key === 'e' || event.key === 'E') {
-                    activateIronBeam();
                 }
             }
 
