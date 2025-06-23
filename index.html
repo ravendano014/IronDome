@@ -2,14 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Iron Dome Enhanced - Mobile</title>
+    <title>Iron Dome Enhanced</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            touch-action: manipulation;
         }
 
         body {
@@ -21,7 +19,6 @@
             height: 100vh;
             overflow: hidden;
             cursor: none;
-            font-family: 'Arial', sans-serif;
         }
 
         .game-container {
@@ -29,8 +26,8 @@
             background-color: #000;
             border: 2px solid #444;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            width: 95vw;
-            height: calc(95vw * 0.75); /* Mantener relación de aspecto 4:3 */
+            width: 90vw;
+            height: calc(90vw * 0.75); /* Mantener relación de aspecto 4:3 */
             max-width: calc(100vh * 1.333); /* Máximo basado en altura */
             max-height: 90vh;
         }
@@ -56,10 +53,10 @@
         h1 {
             color: #0ff;
             text-align: center;
-            font-size: 28px;
+            font-family: 'Arial', sans-serif;
+            font-size: 36px;
             text-shadow: 0 0 10px #0ff;
-            margin-bottom: 8px;
-            padding: 0 10px;
+            margin-bottom: 10px;
         }
 
         /* Estilos para la pantalla de inicio */
@@ -77,27 +74,27 @@
             align-items: center;
             text-align: center;
             z-index: 1001;
-            padding: 20px;
+            font-family: 'Arial', sans-serif;
             cursor: pointer;
         }
 
         #splash-screen h2 {
             color: #0ff;
-            font-size: 3em;
-            margin-bottom: 15px;
+            font-size: 4em;
+            margin-bottom: 20px;
             text-shadow: 0 0 15px #0ff;
         }
 
         #splash-screen p {
-            font-size: 1.2em;
+            font-size: 1.5em;
             margin: 5px 0;
             color: #eee;
-            max-width: 90%;
+            max-width: 70%;
         }
 
         #splash-screen .click-to-start {
-            margin-top: 30px;
-            font-size: 1.8em;
+            margin-top: 40px;
+            font-size: 2em;
             color: #ff0;
             text-shadow: 0 0 10px #ff0;
             animation: pulse 1.5s infinite alternate;
@@ -117,110 +114,69 @@
             justify-content: center;
             align-items: center;
             z-index: 1002;
-            padding: 20px;
-            text-align: center;
+            font-family: 'Arial', sans-serif;
         }
 
         #pause-screen h2 {
-            font-size: 2.5em;
-            margin-bottom: 15px;
+            font-size: 3em;
+            margin-bottom: 20px;
             text-shadow: 0 0 10px #0ff;
         }
 
         #pause-screen p {
-            font-size: 1.3em;
-            margin: 8px 0;
+            font-size: 1.5em;
+            margin: 10px 0;
         }
 
-        /* Tooltip para las habilidades */
-        .tooltip {
+        /* Botones de poder */
+        .power-button {
             position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #0ff;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 1003;
-            display: none;
-            text-align: center;
-            max-width: 200px;
-            border: 1px solid #0ff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
-        
-        /* Indicador de baterías */
-        .battery-indicators {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            margin-top: 10px;
-            padding: 0 10px;
-        }
-        
-        .battery-indicator {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #0ff;
-            font-size: 14px;
-            text-shadow: 0 0 5px #0ff;
-        }
-        
-        .battery-icon {
-            width: 30px;
+            bottom: 10px;
+            width: 80px;
             height: 30px;
-            margin-bottom: 5px;
-            background-color: #333;
+            background-color: rgba(0, 100, 255, 0.5);
             border: 1px solid #0ff;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
+            color: #0ff;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 5px;
+            transition: all 0.3s;
         }
-        
-        .battery-1 .battery-icon { background: linear-gradient(to bottom, #ffff00, #888800); }
-        .battery-2 .battery-icon { background: linear-gradient(to bottom, #ff9900, #885500); }
-        .battery-3 .battery-icon { background: linear-gradient(to bottom, #00ff00, #008800); }
+
+        .power-button:hover {
+            background-color: rgba(0, 150, 255, 0.8);
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        .power-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: rgba(100, 100, 100, 0.5);
+            border-color: #888;
+        }
+
+        #immunity-button {
+            left: 20%;
+            transform: translateX(-50%);
+        }
+
+        #laser-button {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #boost-button {
+            left: 80%;
+            transform: translateX(-50%);
+        }
 
         @keyframes pulse {
             from { opacity: 1; }
             to { opacity: 0.5; }
-        }
-        
-        /* Botones para móviles */
-        .mobile-controls {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-        }
-        
-        .mobile-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: rgba(0, 100, 255, 0.7);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            border: 2px solid #0ff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-            user-select: none;
-            touch-action: manipulation;
-        }
-        
-        .mobile-btn:active {
-            background: rgba(0, 200, 255, 0.9);
-            transform: scale(0.95);
-        }
-        
-        .pause-btn {
-            background: rgba(200, 0, 0, 0.7);
         }
     </style>
 </head>
@@ -230,56 +186,38 @@
         <div class="game-container">
             <canvas></canvas>
             <div class="crosshair"></div>
-            <div class="tooltip" id="battery-tooltip"></div>
-            
-            <div class="battery-indicators">
-                <div class="battery-indicator battery-1">
-                    <div class="battery-icon">I</div>
-                    <div>Immunity</div>
-                </div>
-                <div class="battery-indicator battery-2">
-                    <div class="battery-icon">B</div>
-                    <div>Boost</div>
-                </div>
-                <div class="battery-indicator battery-3">
-                    <div class="battery-icon">L</div>
-                    <div>Laser</div>
-                </div>
-            </div>
-            
-            <div class="mobile-controls">
-                <div class="mobile-btn pause-btn" id="pause-btn">⏸</div>
-                <div class="mobile-btn" id="immunity-btn">I</div>
-                <div class="mobile-btn" id="boost-btn">B</div>
-                <div class="mobile-btn" id="laser-btn">L</div>
-            </div>
             
             <div id="splash-screen">
                 <h2>Iron Dome Enhanced</h2>
                 <p>Defend your cities from the enemy missile rain!</p>
-                <p>Tap to aim and tap to launch a defensive missile.</p>
-                <p>Double-tap on batteries to activate special abilities:</p>
-                <p>- Immunity: Protect cities for 3 waves</p>
-                <p>- Boost: Double explosion radius for 5 waves</p>
-                <p>- Laser: Activate Iron Beam for 7 waves</p>
-                <p class="click-to-start">Tap anywhere to start</p>
+                <p>Move the mouse to aim and click to launch a defensive missile.</p>
+                <p>Each battery has limited missiles, use them strategically!</p>
+                <p>Click on the power buttons at the bottom to activate special abilities:</p>
+                <p>- Left: City Immunity (3 waves)</p>
+                <p>- Center: Iron Beam Laser (7 waves)</p>
+                <p>- Right: Double Explosion Radius (5 waves)</p>
+                <p>Press 'S' to toggle sound ON/OFF.</p>
+                <p>Press 'P' to pause the game.</p>
+                <p class="click-to-start">Click anywhere to start</p>
             </div>
 
             <div id="pause-screen">
                 <h2>GAME PAUSED</h2>
-                <p>Tap Resume to continue</p>
+                <p>Press 'P' to resume</p>
                 <p>Controls:</p>
-                <p>Double-tap batteries for special abilities:</p>
-                <p>Immunity (I) - City protection (3 waves)</p>
-                <p>Boost (B) - Double explosion radius (5 waves)</p>
-                <p>Laser (L) - Iron Beam activation (7 waves)</p>
-                <div class="mobile-btn" id="resume-btn" style="margin-top: 20px;">Resume</div>
+                <p>S - Toggle Sound</p>
+                <p>Click bottom buttons for special powers</p>
             </div>
+            
+            <!-- Botones de poder -->
+            <div id="immunity-button" class="power-button" title="City Immunity (3 waves)">IMMUNITY</div>
+            <div id="laser-button" class="power-button" title="Iron Beam Laser (7 waves)">LASER</div>
+            <div id="boost-button" class="power-button" title="Double Explosion (5 waves)">BOOST</div>
         </div>
     </div>
 
     <script>
-        // Iron Dome Enhanced - Mobile Version
+        // Iron Dome Enhanced
         const missileCommand = (function() {
             const canvas = document.querySelector('canvas');
             const ctx = canvas.getContext('2d');
@@ -287,12 +225,9 @@
             const crosshair = document.querySelector('.crosshair');
             const splashScreen = document.getElementById('splash-screen');
             const pauseScreen = document.getElementById('pause-screen');
-            const tooltip = document.getElementById('battery-tooltip');
-            const pauseBtn = document.getElementById('pause-btn');
-            const resumeBtn = document.getElementById('resume-btn');
-            const immunityBtn = document.getElementById('immunity-btn');
-            const boostBtn = document.getElementById('boost-btn');
-            const laserBtn = document.getElementById('laser-btn');
+            const immunityButton = document.getElementById('immunity-button');
+            const laserButton = document.getElementById('laser-button');
+            const boostButton = document.getElementById('boost-button');
 
             // Variables para dimensiones dinámicas
             let CANVAS_WIDTH = 800;
@@ -314,6 +249,22 @@
                 if (gameStarted) {
                     drawGameState();
                 }
+                
+                // Actualizar posición de los botones
+                updatePowerButtonsPosition();
+            }
+            
+            function updatePowerButtonsPosition() {
+                const containerRect = gameContainer.getBoundingClientRect();
+                const bottomOffset = 10;
+                
+                immunityButton.style.left = `${containerRect.width * 0.25}px`;
+                laserButton.style.left = `${containerRect.width * 0.5}px`;
+                boostButton.style.left = `${containerRect.width * 0.75}px`;
+                
+                immunityButton.style.bottom = `${bottomOffset}px`;
+                laserButton.style.bottom = `${bottomOffset}px`;
+                boostButton.style.bottom = `${bottomOffset}px`;
             }
 
             // Escalar un valor según el tamaño actual del canvas
@@ -329,6 +280,11 @@
             // Escalar una posición vertical
             function scaleY(y) {
                 return y * (CANVAS_HEIGHT / 600);
+            }
+
+            // Escalar dimensiones (ancho y alto)
+            function scaleDimensions(width, height) {
+                return [width * (CANVAS_WIDTH / 800), height * (CANVAS_HEIGHT / 600)];
             }
 
             // Constants
@@ -353,6 +309,7 @@
             let enemyMissiles = [];
             let timerID;
             let gameStarted = false;
+            let soundEnabled = false;
             let gamePaused = false;
             let currentWave = 0;
             let waveActive = false;
@@ -403,11 +360,6 @@
             let ironBeamLasers = [];
             let lastBeamActivationTime = 0;
             const BEAM_COOLDOWN = 1000; // 1 segundo entre activaciones
-            
-            // Variables para el doble toque
-            let lastTapTime = 0;
-            let tapCount = 0;
-            let lastTappedBattery = -1;
 
             // Initialize game
             function initialize() {
@@ -428,6 +380,55 @@
                 createBatteries();
                 
                 drawGameState();
+                
+                // Configurar listeners para los botones de poder
+                setupPowerButtons();
+            }
+            
+            function setupPowerButtons() {
+                immunityButton.addEventListener('click', () => {
+                    if (!gamePaused && gameStarted && !immunityButton.classList.contains('disabled')) {
+                        activateImmunity();
+                    }
+                });
+                
+                laserButton.addEventListener('click', () => {
+                    if (!gamePaused && gameStarted && !laserButton.classList.contains('disabled')) {
+                        activateIronBeam();
+                    }
+                });
+                
+                boostButton.addEventListener('click', () => {
+                    if (!gamePaused && gameStarted && !boostButton.classList.contains('disabled')) {
+                        activateExplosionBoost();
+                    }
+                });
+                
+                // Ocultar botones al inicio
+                immunityButton.style.display = 'none';
+                laserButton.style.display = 'none';
+                boostButton.style.display = 'none';
+            }
+            
+            function updatePowerButtons() {
+                // Actualizar estado de los botones según los poderes disponibles
+                if (powerUpUsedThisLevel.immunity) {
+                    immunityButton.classList.add('disabled');
+                } else {
+                    immunityButton.classList.remove('disabled');
+                }
+                
+                if (ironBeamActive) {
+                    laserButton.classList.add('disabled');
+                } else {
+                    laserButton.classList.remove('disabled');
+                }
+                
+                if (powerUpUsedThisLevel.explosion) {
+                    boostButton.classList.add('disabled');
+                } else {
+                    boostButton.classList.remove('disabled');
+                }
             }
 
             function resetGameState() {
@@ -441,6 +442,7 @@
                 waveActive = false;
                 gameStarted = false;
                 gamePaused = false;
+                soundEnabled = false;
                 bonusMissilesForNextWave = 0;
                 enemyPlane = null;
                 planesPerLevel = 0;
@@ -477,6 +479,11 @@
                 ironBeamWavesLeft = 0;
                 ironBeamLasers = [];
                 lastBeamActivationTime = 0;
+                
+                // Resetear estado de los botones
+                immunityButton.classList.remove('disabled');
+                laserButton.classList.remove('disabled');
+                boostButton.classList.remove('disabled');
             }
 
             function createCities() {
@@ -489,151 +496,29 @@
             }
 
             function createBatteries() {
-                // Left battery - Immunity
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'immunity'));
-                // Middle battery - Explosion boost
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'explosion'));
-                // Right battery - Iron Beam
-                antiMissileBatteries.push(new AntiMissileBattery(scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT), 'laser'));
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
+                antiMissileBatteries.push(new AntiMissileBattery(scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)));
             }
 
             // Setup event listeners
             function setupListeners() {
-                splashScreen.addEventListener('click', startGame);
-                splashScreen.addEventListener('touchend', startGame);
-                
-                gameContainer.addEventListener('click', handleTap);
-                gameContainer.addEventListener('touchend', handleTap);
-                
-                gameContainer.addEventListener('mousemove', handleMouseMove);
-                gameContainer.addEventListener('touchmove', handleTouchMove);
-                
-                pauseBtn.addEventListener('click', togglePause);
-                pauseBtn.addEventListener('touchend', togglePause);
-                
-                resumeBtn.addEventListener('click', togglePause);
-                resumeBtn.addEventListener('touchend', togglePause);
-                
-                immunityBtn.addEventListener('click', () => activateImmunity());
-                immunityBtn.addEventListener('touchend', () => activateImmunity());
-                
-                boostBtn.addEventListener('click', () => activateExplosionBoost());
-                boostBtn.addEventListener('touchend', () => activateExplosionBoost());
-                
-                laserBtn.addEventListener('click', () => activateIronBeam());
-                laserBtn.addEventListener('touchend', () => activateIronBeam());
-            }
-            
-            function startGame() {
-                if (!gameStarted) {
-                    splashScreen.style.display = 'none';
-                    gameStarted = true;
-                    initializeLevel();
-                    crosshair.style.display = 'block';
-                }
-            }
-
-            // Handle tap events (single and double)
-            function handleTap(event) {
-                event.preventDefault();
-                const rect = canvas.getBoundingClientRect();
-                let clientX, clientY;
-                
-                if (event.type === 'touchend') {
-                    if (event.changedTouches.length === 0) return;
-                    clientX = event.changedTouches[0].clientX;
-                    clientY = event.changedTouches[0].clientY;
-                } else {
-                    clientX = event.clientX;
-                    clientY = event.clientY;
-                }
-                
-                const canvasX = clientX - rect.left;
-                const canvasY = clientY - rect.top;
-                
-                // Check if tap is on a battery
-                const batteryIndex = getBatteryAtPosition(canvasX, canvasY);
-                
-                if (batteryIndex !== -1) {
-                    const currentTime = new Date().getTime();
-                    const tapDelay = currentTime - lastTapTime;
-                    
-                    if (tapDelay < 300 && batteryIndex === lastTappedBattery) {
-                        // Double tap on battery - activate ability
-                        tapCount = 0;
-                        activateBatteryAbility(batteryIndex);
-                    } else {
-                        // Single tap on battery
-                        tapCount = 1;
-                        lastTappedBattery = batteryIndex;
+                splashScreen.addEventListener('click', () => {
+                    if (!gameStarted) {
+                        splashScreen.style.display = 'none';
+                        gameStarted = true;
+                        initializeLevel();
+                        gameContainer.addEventListener('click', handleShoot);
+                        gameContainer.addEventListener('mousemove', handleMouseMove);
+                        crosshair.style.display = 'block';
                         
-                        setTimeout(() => {
-                            if (tapCount === 1) {
-                                playerShoot(clientX, clientY);
-                                tapCount = 0;
-                            }
-                        }, 300);
+                        // Mostrar botones de poder
+                        immunityButton.style.display = 'block';
+                        laserButton.style.display = 'block';
+                        boostButton.style.display = 'block';
                     }
-                    
-                    lastTapTime = currentTime;
-                } else {
-                    // Handle normal tap for shooting
-                    playerShoot(clientX, clientY);
-                }
-            }
-            
-            // Get battery at position
-            function getBatteryAtPosition(x, y) {
-                for (let i = 0; i < antiMissileBatteries.length; i++) {
-                    const battery = antiMissileBatteries[i];
-                    const batteryLeft = battery.x - battery.width / 2;
-                    const batteryRight = battery.x + battery.width / 2;
-                    const batteryTop = battery.y - battery.height;
-                    const batteryBottom = battery.y;
-                    
-                    if (x >= batteryLeft && x <= batteryRight && 
-                        y >= batteryTop && y <= batteryBottom) {
-                        return i;
-                    }
-                }
-                return -1;
-            }
-            
-            // Activate battery special ability
-            function activateBatteryAbility(batteryIndex) {
-                const battery = antiMissileBatteries[batteryIndex];
-                
-                if (!battery.active) {
-                    showTooltip("Battery destroyed!", battery.x, battery.y - battery.height);
-                    return;
-                }
-                
-                switch (battery.specialAbility) {
-                    case 'immunity':
-                        activateImmunity();
-                        showTooltip("Immunity activated! (3 waves)", battery.x, battery.y - battery.height);
-                        break;
-                    case 'explosion':
-                        activateExplosionBoost();
-                        showTooltip("Explosion boost activated! (5 waves)", battery.x, battery.y - battery.height);
-                        break;
-                    case 'laser':
-                        activateIronBeam();
-                        showTooltip("Iron Beam activated! (7 waves)", battery.x, battery.y - battery.height);
-                        break;
-                }
-            }
-            
-            // Show tooltip
-            function showTooltip(text, x, y) {
-                tooltip.textContent = text;
-                tooltip.style.left = `${x}px`;
-                tooltip.style.top = `${y - 40}px`;
-                tooltip.style.display = 'block';
-                
-                setTimeout(() => {
-                    tooltip.style.display = 'none';
-                }, 2000);
+                });
+                document.addEventListener('keydown', handleKeyPress);
             }
 
             // Initialize level
@@ -724,6 +609,9 @@
                         ironBeamLasers = [];
                     }
                 }
+                
+                // Actualizar estado de los botones
+                updatePowerButtons();
 
                 const initialMissiles = 10;
                 
@@ -807,15 +695,15 @@
                 drawLevel();
                 drawPowerUpStatus();
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
-                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(250), scaleY(30));
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(300), scaleY(30));
                 updateCrosshairPosition();
             }
 
             // Draw power-up status
             function drawPowerUpStatus() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(14)}px Arial`;
+                ctx.font = `bold ${scaleValue(16)}px Arial`;
                 
                 if (immunityActive) {
                     ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, scaleX(20), scaleY(60));
@@ -851,15 +739,15 @@
                 ctx.fillRect(scaleX(100), scaleY(150), scaleX(600), scaleY(300));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(25)}px Arial`;
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText('DEFEND YOUR CITIES', CANVAS_WIDTH / 2, scaleY(200));
                 
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
                 ctx.fillText(`LEVEL ${level}`, CANVAS_WIDTH / 2, scaleY(250));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('TAP TO START', CANVAS_WIDTH / 2, scaleY(350));
+                ctx.fillText('CLICK TO START', CANVAS_WIDTH / 2, scaleY(350));
                 
                 ctx.textAlign = 'left';
             }
@@ -867,15 +755,15 @@
             // Draw score
             function drawScore() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
-                ctx.fillText(`Score: ${score}`, scaleX(50), scaleY(30));
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Score: ${score}`, scaleX(70), scaleY(30));
             }
 
             // Draw level
             function drawLevel() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
-                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(120), scaleY(30));
+                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(150), scaleY(30));
             }
 
             // Draw end level screen
@@ -883,36 +771,36 @@
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(scaleX(50), scaleY(80), CANVAS_WIDTH - scaleX(100), scaleY(350));
+                ctx.fillRect(scaleX(100), scaleY(100), scaleX(600), scaleY(400));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(25)}px Arial`;
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(130));
+                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(150));
                 
-                ctx.font = `bold ${scaleValue(18)}px Arial`;
-                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(160));
-                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(190));
-                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(220));
-                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(250));
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(180));
+                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(210));
+                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(240));
+                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(270));
                 if (spyPlaneBonus > 0) {
-                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus}`, CANVAS_WIDTH / 2, scaleY(280));
+                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, scaleY(300));
                 }
                 if (stealthPlaneBonusActive) {
-                    ctx.fillText(`Stealth Plane Bonus: Double Radius!`, CANVAS_WIDTH / 2, scaleY(310));
+                    ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, scaleY(330));
                 }
                 if (cargoPlaneMissileReduction > 0) {
-                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction}`, CANVAS_WIDTH / 2, scaleY(340));
+                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction} Enemy Missiles/Wave!`, CANVAS_WIDTH / 2, scaleY(360));
                 }
                 if (killerPlaneImmunityActive) {
-                    ctx.fillText(`Killer Plane Bonus: Immunity!`, CANVAS_WIDTH / 2, scaleY(370));
+                    ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, scaleY(390));
                 }
                 if (ironBeamActive) {
-                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft}`, CANVAS_WIDTH / 2, scaleY(400));
+                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft} waves left!`, CANVAS_WIDTH / 2, scaleY(420));
                 }
 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(430));
+                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(450));
                 
                 ctx.textAlign = 'left';
             }
@@ -923,15 +811,15 @@
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = `bold ${scaleValue(35)}px Arial`;
+                ctx.font = `bold ${scaleValue(40)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - scaleY(40));
                 
-                ctx.font = `bold ${scaleValue(25)}px Arial`;
+                ctx.font = `bold ${scaleValue(30)}px Arial`;
                 ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(20));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('TAP TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
+                ctx.fillText('CLICK TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
                 
                 ctx.textAlign = 'left';
             }
@@ -1117,7 +1005,7 @@
 
             // Anti-missile battery class
             class AntiMissileBattery {
-                constructor(x, y, specialAbility) {
+                constructor(x, y) {
                     this.x = x;
                     this.y = y;
                     this.missilesLeft = 10;
@@ -1127,17 +1015,6 @@
                     this.health = 3;
                     this.radarAngle = 0;
                     this.animationFrame = 0;
-                    this.specialAbility = specialAbility; // 'immunity', 'explosion', or 'laser'
-                    this.specialColor = this.getSpecialColor();
-                }
-                
-                getSpecialColor() {
-                    switch(this.specialAbility) {
-                        case 'immunity': return '#ffff00'; // Yellow
-                        case 'explosion': return '#ff9900'; // Orange
-                        case 'laser': return '#00ff00'; // Green
-                        default: return '#0ff'; // Cyan
-                    }
                 }
 
                 hasMissile() {
@@ -1229,7 +1106,7 @@
                         
                         // Missile inside silo
                         if (this.missilesLeft > i) {
-                            ctx.fillStyle = this.specialColor;
+                            ctx.fillStyle = '#0f0';
                             ctx.fillRect(currentSiloX + scaleValue(1), hexBaseY - siloHeight + scaleValue(5), siloWidth - scaleValue(2), siloHeight - scaleValue(8));
                             // Missile tip
                             ctx.beginPath();
@@ -1262,12 +1139,12 @@
                     ctx.save();
                     ctx.translate(radarCenterX, radarCenterY);
                     ctx.rotate(this.radarAngle * Math.PI / 180);
-                    ctx.fillStyle = this.specialColor;
+                    ctx.fillStyle = '#0ff';
                     ctx.fillRect(0, -scaleValue(1), radarRadius, scaleValue(2));
                     ctx.restore();
 
                     // Missile count display (digital style)
-                    ctx.fillStyle = this.specialColor;
+                    ctx.fillStyle = '#0ff';
                     ctx.font = `bold ${scaleValue(12)}px "Press Start 2P", cursive, monospace`;
                     ctx.textAlign = 'center';
                     ctx.fillText(`${this.missilesLeft}`, this.x, hexTopY + scaleValue(10));
@@ -1290,20 +1167,6 @@
                         ctx.lineWidth = scaleValue(1);
                         ctx.strokeRect(barX, barY, barWidth, barHeight);
                     }
-                    
-                    // Special ability indicator
-                    ctx.fillStyle = this.specialColor;
-                    ctx.font = `bold ${scaleValue(10)}px Arial`;
-                    ctx.textAlign = 'center';
-                    
-                    let abilityText = '';
-                    switch(this.specialAbility) {
-                        case 'immunity': abilityText = 'IMMUNITY'; break;
-                        case 'explosion': abilityText = 'BOOST'; break;
-                        case 'laser': abilityText = 'LASER'; break;
-                    }
-                    
-                    ctx.fillText(abilityText, this.x, baseY + scaleValue(25));
                 }
             }
 
@@ -1439,6 +1302,7 @@
                             this.targetMissile.state = MISSILE.exploding;
                             score += 50 * getMultiplier();
                             lastBeamActivationTime = Date.now();
+                            playSound('shoot');
                         }
                     } else {
                         this.beamActive = false;
@@ -1540,6 +1404,8 @@
                                     if (targetBattery.health <= 0) {
                                         targetBattery.active = false;
                                         targetBattery.missilesLeft = 0;
+                                        playSound('batteryDestroyed');
+                                        console.log('Battery destroyed!');
                                     }
                                 }
                             }
@@ -1562,7 +1428,7 @@
                         startY: amb.y,
                         endX: endX,
                         endY: endY,
-                        color: amb.specialColor,
+                        color: '#0f0',
                         trailColor: 'rgba(0, 255, 255, 0.7)',
                         speedFactor: speedFactor,
                         explosionSizeMultiplier: stealthPlaneExplosionBonus
@@ -1597,18 +1463,20 @@
             }
 
             // Player shoot function
-            function playerShoot(clientX, clientY) {
+            function playerShoot(x, y) {
                 if (gamePaused) return;
                 
                 const rect = canvas.getBoundingClientRect();
-                const canvasX = clientX - rect.left;
-                const canvasY = clientY - rect.top;
+                const canvasX = x - rect.left;
+                const canvasY = y - rect.top;
 
                 if(canvasY >= scaleY(50) && canvasY <= CANVAS_HEIGHT - GROUND_HEIGHT - scaleY(50)) {
                     const source = whichAntiMissileBattery(canvasX);
                     if(source === -1) return;
                     
                     playerMissiles.push(new PlayerMissile(source, canvasX, canvasY));
+                    
+                    playSound('shoot');
                 }
             }
 
@@ -1663,6 +1531,8 @@
                         this.y = this.endY;
                         this.state = MISSILE.exploding;
                         this.groundExplosion = true;
+                        
+                        playSound('explosion');
                     }
                     
                     if(this.state === MISSILE.active) {
@@ -1765,6 +1635,7 @@
                             if (targets.length > 0) {
                                 enemyMissiles.push(new EnemyMissile(targets, true, 1.2, true, this.x, this.y));
                                 this.missilesToLaunch--;
+                                playSound('shoot');
                             }
                             this.currentMissileCooldown = rand(30, this.missileLaunchCooldown);
                         }
@@ -1784,6 +1655,7 @@
                     score += 500 * getMultiplier();
                     planesShotDownThisLevel++;
                     checkPlaneReconstructionBonus();
+                    playSound('explosion');
                 }
             }
 
@@ -1875,6 +1747,8 @@
                     score += 750 * getMultiplier();
                     spyPlaneWaveMissileBonus += 2;
                     extraMissilesFromSpyPlane += 2;
+                    playSound('explosion');
+                    console.log(`Spy Plane shot down! Missile bonus per wave increased by 2. Total bonus: ${spyPlaneWaveMissileBonus}`);
                 }
             }
 
@@ -1967,6 +1841,8 @@
                     this.exploded = true;
                     score += 1000 * getMultiplier();
                     stealthPlaneExplosionBonus = 2;
+                    playSound('explosion');
+                    console.log(`Stealth Plane shot down! Missile explosion radius doubled!`);
                 }
             }
 
@@ -2067,6 +1943,8 @@
                     this.exploded = true;
                     score += 1200 * getMultiplier();
                     cargoPlaneEnemyMissileReduction = Math.min(2 * level, cargoPlaneEnemyMissileReduction + 2); 
+                    playSound('explosion');
+                    console.log(`Cargo Plane shot down! Enemy missiles per wave reduced by 2 for the rest of the level!`);
                 }
             }
 
@@ -2160,6 +2038,7 @@
                             if (targets.length > 0) {
                                 enemyMissiles.push(new EnemyMissile(targets, true, 1.5, true, this.x, this.y));
                                 this.missilesToLaunch--;
+                                playSound('shoot');
                             }
                             this.currentMissileCooldown = rand(15, this.missileLaunchCooldown);
                         }
@@ -2178,6 +2057,8 @@
                     this.exploded = true;
                     score += 2000 * getMultiplier();
                     citiesImmune = true;
+                    playSound('explosion');
+                    console.log(`Killer Plane shot down! Cities are now immune for this wave!`);
                 }
             }
 
@@ -2277,11 +2158,13 @@
                     if (structureToRebuild instanceof City) {
                         structureToRebuild.active = true;
                         reconstructedCount++;
+                        console.log("¡Ciudad reconstruida por derribar 3 aviones!");
                     } else if (structureToRebuild instanceof AntiMissileBattery) {
                         structureToRebuild.active = true;
                         structureToRebuild.health = 3;
                         structureToRebuild.missilesLeft = 10;
                         reconstructedCount++;
+                        console.log("¡Lanzadera reconstruida por derribar 3 aviones!");
                     }
                 }
             }
@@ -2423,6 +2306,7 @@
                         setTimeout(() => {
                             enemyPlane = new EnemyPlane();
                             planesPerLevel++;
+                            console.log(`Enemy plane appearing. Planes this level: ${planesPerLevel}`);
                         }, rand(2000, 5000));
                     }
                 }
@@ -2435,6 +2319,7 @@
                         setTimeout(() => {
                             spyPlane = new SpyPlane();
                             spyPlanesAppearedThisLevel++;
+                            console.log(`Spy plane appearing! Spy planes this level: ${spyPlanesAppearedThisLevel}`);
                         }, rand(4000, 8000));
                     }
                 }
@@ -2447,6 +2332,7 @@
                         setTimeout(() => {
                             stealthPlane = new StealthPlane();
                             stealthPlaneSpawnedThisLevel = true;
+                            console.log(`Stealth plane appearing in Wave ${currentWave}!`);
                         }, rand(4000, 7000)); 
                     }
                 }
@@ -2459,6 +2345,7 @@
                         setTimeout(() => {
                             cargoPlane = new CargoPlane();
                             cargoPlaneSpawnedThisLevel = true;
+                            console.log(`Cargo plane appearing in Wave ${currentWave}!`);
                         }, rand(5000, 9000)); 
                     }
                 }
@@ -2471,6 +2358,7 @@
                         setTimeout(() => {
                             killerPlane = new KillerPlane();
                             killerPlaneSpawnedThisLevel = true;
+                            console.log(`Killer plane appearing in Wave ${currentWave}!`);
                         }, rand(6000, 10000)); 
                     }
                 }
@@ -2486,8 +2374,8 @@
                     (!killerPlane || !killerPlane.active && !killerPlane.exploded)
                 ) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleTap);
-                    gameContainer.removeEventListener('touchend', handleTap);
+                    gameContainer.removeEventListener('click', handleShoot);
+                    gameContainer.removeEventListener('mousemove', handleMouseMove);
                     crosshair.style.display = 'none';
                     
                     const missilesLeft = totalMissilesLeft();
@@ -2505,8 +2393,8 @@
             function checkAllCitiesDestroyed() {
                 if (totalCitiesSaved() === 0) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleTap);
-                    gameContainer.removeEventListener('touchend', handleTap);
+                    gameContainer.removeEventListener('click', handleShoot);
+                    gameContainer.removeEventListener('mousemove', handleMouseMove);
                     crosshair.style.display = 'none';
                     endGame(totalMissilesLeft());
                 }
@@ -2560,6 +2448,7 @@
                 // LEVEL 1 TO 2 REWARD LOGIC
                 if (level === 2 && totalCitiesSaved() === 6) {
                     bonusMissilesForNextWave = 10; 
+                    console.log("10 extra missiles per battery for Level 2 for saving all cities!"); 
                 }
 
                 // NEW LOGIC: Rebuild a city if level score was > 3000
@@ -2569,6 +2458,7 @@
                         const cityToRebuild = destroyedCities[rand(0, destroyedCities.length - 1)];
                         cityToRebuild.active = true;
                         reconstructedCount++;
+                        console.log("City rebuilt due to high score!"); 
                     }
                 }
 
@@ -2577,10 +2467,11 @@
                     amb.active = true;
                     amb.health = 3;
                 });
+                console.log("Launchers rebuilt and repaired!"); 
 
                 initializeLevel(); 
-                gameContainer.addEventListener('click', handleTap);
-                gameContainer.addEventListener('touchend', handleTap);
+                gameContainer.addEventListener('click', handleShoot);
+                gameContainer.addEventListener('mousemove', handleMouseMove);
                 crosshair.style.display = 'block';
             }
 
@@ -2589,14 +2480,14 @@
                 score += missilesLeft * 5 * getMultiplier();
                 drawEndGame();
                 
+                playSound('gameOver');
+
                 const resetGame = () => {
                     document.removeEventListener('click', resetGame);
-                    document.removeEventListener('touchend', resetGame);
                     location.reload(); 
                 };
                 
                 document.addEventListener('click', resetGame);
-                document.addEventListener('touchend', resetGame);
             }
 
             // Get total missiles left
@@ -2677,16 +2568,17 @@
                 targetCrosshairX = event.clientX - rect.left;
                 targetCrosshairY = event.clientY - rect.top;
             }
-            
-            // Handle touch move
-            function handleTouchMove(event) {
-                event.preventDefault();
-                if (event.touches.length > 0) {
-                    const touch = event.touches[0];
-                    const rect = canvas.getBoundingClientRect();
-                    targetCrosshairX = touch.clientX - rect.left;
-                    targetCrosshairY = touch.clientY - rect.top;
-                }
+
+            // Handle shoot event 
+            function handleShoot(event) {
+                playerShoot(event.clientX, event.clientY);
+            }
+
+            // Toggle sound function for key press
+            function toggleSound() {
+                soundEnabled = !soundEnabled;
+                const soundStatus = soundEnabled ? 'ON' : 'OFF';
+                console.log(`Sound: ${soundStatus}`);
             }
 
             // Toggle pause function
@@ -2708,9 +2600,12 @@
                     immunityWavesLeft = 3;
                     citiesImmune = true;
                     powerUpUsedThisLevel.immunity = true;
-                    showTooltip("Immunity activated! (3 waves)", scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("City immunity activated for 3 waves!");
+                    
+                    // Actualizar botón
+                    updatePowerButtons();
                 } else {
-                    showTooltip("Immunity already used!", scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("Immunity power-up already used this level!");
                 }
             }
 
@@ -2721,9 +2616,24 @@
                     explosionBoostWavesLeft = 5;
                     stealthPlaneExplosionBonus = 2;
                     powerUpUsedThisLevel.explosion = true;
-                    showTooltip("Explosion boost activated! (5 waves)", scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("Explosion radius doubled for 5 waves!");
+                    
+                    // Actualizar botón
+                    updatePowerButtons();
                 } else {
-                    showTooltip("Boost already used!", scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("Explosion boost power-up already used this level!");
+                }
+            }
+
+            // Activate enemy reduction power-up
+            function activateEnemyReduction() {
+                if (!powerUpUsedThisLevel.reduction) {
+                    enemyReductionActive = true;
+                    enemyReductionWavesLeft = 4;
+                    powerUpUsedThisLevel.reduction = true;
+                    console.log("Enemy missiles reduced by 4 for 4 waves!");
+                } else {
+                    console.log("Enemy reduction power-up already used this level!");
                 }
             }
             
@@ -2736,9 +2646,51 @@
                         new IronBeamLaser(scaleX(350), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)),
                         new IronBeamLaser(scaleX(450), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT))
                     ];
-                    showTooltip("Iron Beam activated! (7 waves)", scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("Iron Beam Laser activated for 7 waves!");
+                    
+                    // Actualizar botón
+                    updatePowerButtons();
                 } else {
-                    showTooltip("Laser already active!", scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
+                    console.log("Iron Beam Laser is already active!");
+                }
+            }
+
+            // Handle key press for sound toggle and other functions
+            function handleKeyPress(event) {
+                if (event.key === 's' || event.key === 'S') {
+                    toggleSound();
+                } else if (event.key === 'p' || event.key === 'P') {
+                    togglePause();
+                }
+            }
+
+            // Simple sound effects
+            function playSound(type) {
+                if(!soundEnabled || typeof Audio === 'undefined') return;
+                
+                try {
+                    let sound;
+                    switch(type) {
+                        case 'shoot':
+                            sound = new Audio('data:audio/wav;base64,UklGRqgoAQBXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQiwJgAAihoAAIgeAACFIgAAqCQAAKcnAACoJwAAeicAAIIfAACAIQAAmSEAAKMkAACOIwAAnCMAAJ4lAACKJQAAgiMAAIwjAACNIwAAhSMAAKclAACFJwAAkiQAAKIkAACWIgAAgyMAAIUfAACeHQAAjysAALMwAAC1LAAAsSwAAKctAACoJwAAnyIAAI4gAACuKQAAtisAALArAACzKQAAnCUAAJwiAACYIwAAkSUAAJwgAACjHgAAjyYAAIclAACJHQAAjyMAACdBAABcRAAA9w4AAD07AAC3LgAAty0AALMtAACvKwAAsCsAALEyAACiNwAAkDAAAIA4AAD1MwAA8S4AALMxAACrMAAAtzQAAK8xAACpLAQArjAAAKkwAAKg7AAC+LQAA7i4AADU+AACyNQAAtzQAAKA8AAD5LwAA7icAAFUQAACkIQAAmBoAAKgnAACYIgAAmSMAAJomAAClJQAAmiYAAKgoAACoKAACYIQAAnCQAAKkgAACgIQAAkSgAAL8wAACiKQAAmyQAAKUjAACaJQAAkSQAAJojAACaIAAAjiEAAJIgAACcIQAAoB8AAJoiAACYIwAAmiIAAJogAACKHwAAkCEAAIwfAACaJAAAmCMAAJYhAACaIAAAjycAALc5AAC+NwAAqS8AAKwvAAC3JwAAjyUAALQnAAC4JgAAqioAALIrAACxKgAAmyQAAJ4nAACgKAAApSUAAJwiAACYJAAAngAAAJYjAACZIgAAnSEAAJMfAACWIAAAmhoAAJEdAACXIwAAgR0AAJsgAAB1HAAAjSMAAFUaAACcIQAAjR6AAIAgAACbJAAAmCYAAJAjAACVIQAAkCEAAIwfAACDHAAAjyIAAJAhAACVJQAAkCMAAIwgAACMHAAAjyAAAKceAAB+HQAAmR8AAIAhAACaIQAAoyIAAKIgAACWJAAAkBwAAJ8hAACbIAAAkB8AAJkdAACWHgAAkiAAAJYhAACQIAAAmCEAAJYiAACgHwAAjB0AAIIdAACCIwAAihoAAIghAACXHQAAkR0AAJcfAACZIgAAiSAAAJYgAACaIAAAmCEAAJwiAACaIAAAmyIAAJsiAACZIwAAlyQAAJojAACXIwAAkCMASlVgGkXQ+0Jv/f3d6v/Wv/7U//4m/82//iT/6Q//yR/7q//1b//hU//n0P/r+/3q+P///wAAAA==');
+                            break;
+                        case 'gameOver':
+                            sound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+                            break;
+                        case 'batteryDestroyed':
+                            console.log('Battery Destroyed Sound Placeholder');
+                            break;
+                        case 'hit':
+                            console.log('Battery Hit Sound Placeholder');
+                            break;
+                    }
+                    
+                    if(sound) {
+                        sound.volume = 0.3;
+                        sound.play().catch(e => console.log('Sound playback failed:', e));
+                    }
+                } catch(e) {
+                    console.log('Sound error:', e);
                 }
             }
 
