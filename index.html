@@ -292,6 +292,7 @@
             const MAX_STEALTH_PLANES_PER_LEVEL = 10;
             const MAX_CARGO_PLANES_PER_LEVEL = 10;
             const WAVES_PER_LEVEL = 10;
+            const MAX_BEAM_RANGE = scaleValue(500); // Nuevo: Rango máximo del láser
 
             const MISSILE = {
                 active: 1,
@@ -1170,7 +1171,7 @@
                 }
             }
 
-            // Iron Beam Laser class
+            // Iron Beam Laser class (modificada)
             class IronBeamLaser {
                 constructor(x, y) {
                     this.x = x;
@@ -1184,6 +1185,8 @@
                     this.beamEndX = 0;
                     this.beamEndY = 0;
                     this.beamWidth = scaleValue(3);
+                    // Rango base + 25px por nivel, sin superar el máximo
+                    this.range = Math.min(scaleValue(200) + (level * scaleValue(25)), MAX_BEAM_RANGE);
                 }
 
                 draw() {
@@ -1255,6 +1258,9 @@
                 update() {
                     if (gamePaused) return;
                     
+                    // Actualizar rango cada nivel
+                    this.range = Math.min(scaleValue(200) + (level * scaleValue(25)), MAX_BEAM_RANGE);
+                    
                     // Find closest enemy missile in range
                     if (!this.targetMissile || !this.targetMissile.active || 
                         this.targetMissile.state !== MISSILE.active || 
@@ -1265,7 +1271,7 @@
                         
                         // Find new target
                         let closestMissile = null;
-                        let closestDistance = scaleValue(200); // Range of the laser
+                        let closestDistance = this.range; // Usar el rango actualizado
                         
                         enemyMissiles.forEach(missile => {
                             if (missile.state === MISSILE.active) {
@@ -1297,7 +1303,7 @@
                         const dy = this.beamEndY - (this.y - this.height / 2);
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance < scaleValue(210)) { // Slightly more than range to account for movement
+                        if (distance < this.range + scaleValue(10)) { // Margen adicional
                             // Destroy the missile
                             this.targetMissile.state = MISSILE.exploding;
                             score += 50 * getMultiplier();
@@ -2169,12 +2175,13 @@
                 }
             }
 
-            // Get viable targets for enemy missiles
+            // Get viable targets for enemy missiles (modificada para la inmunidad)
             function viableTargets() {
                 const targets = [];
+                const activeCities = cities.filter(city => city.active).length;
 
-                // If cities are immune, enemy missiles can only target batteries
-                if (citiesImmune || immunityActive) {
+                // Si quedan menos de 4 ciudades, la inmunidad protege lanzaderas
+                if ((citiesImmune || immunityActive) && activeCities < 4) {
                     antiMissileBatteries.forEach(amb => {
                         if (amb.active) {
                             targets.push([amb.x, amb.y - amb.height, amb]);
@@ -2593,32 +2600,33 @@
                 }
             }
 
-            // Activate city immunity power-up
+            // Activate city immunity power-up (modificada)
             function activateImmunity() {
                 if (!powerUpUsedThisLevel.immunity) {
                     immunityActive = true;
                     immunityWavesLeft = 3;
-                    citiesImmune = true;
+                    // Solo activar citiesImmune si hay menos de 4 ciudades
+                    const activeCities = cities.filter(city => city.active).length;
+                    citiesImmune = activeCities < 4;
                     powerUpUsedThisLevel.immunity = true;
-                    console.log("City immunity activated for 3 waves!");
+                    console.log(`City immunity activated for 3 waves! ${activeCities < 4 ? 'Protecting batteries' : 'Protecting cities'}`);
                     
-                    // Actualizar botón
                     updatePowerButtons();
                 } else {
                     console.log("Immunity power-up already used this level!");
                 }
             }
 
-            // Activate explosion boost power-up
+            // Activate explosion boost power-up (modificada)
             function activateExplosionBoost() {
                 if (!powerUpUsedThisLevel.explosion) {
                     explosionBoostActive = true;
                     explosionBoostWavesLeft = 5;
-                    stealthPlaneExplosionBonus = 2;
+                    // Duplicar en niveles pares, triplicar en impares
+                    stealthPlaneExplosionBonus = (level % 2 === 0) ? 2 : 3;
                     powerUpUsedThisLevel.explosion = true;
-                    console.log("Explosion radius doubled for 5 waves!");
+                    console.log(`Explosion radius ${(level % 2 === 0) ? 'doubled' : 'tripled'} for 5 waves!`);
                     
-                    // Actualizar botón
                     updatePowerButtons();
                 } else {
                     console.log("Explosion boost power-up already used this level!");
@@ -2648,7 +2656,6 @@
                     ];
                     console.log("Iron Beam Laser activated for 7 waves!");
                     
-                    // Actualizar botón
                     updatePowerButtons();
                 } else {
                     console.log("Iron Beam Laser is already active!");
