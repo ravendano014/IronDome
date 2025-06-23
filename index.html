@@ -2,12 +2,14 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Iron Dome Enhanced</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Iron Dome Enhanced - Mobile</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            touch-action: manipulation;
         }
 
         body {
@@ -19,6 +21,7 @@
             height: 100vh;
             overflow: hidden;
             cursor: none;
+            font-family: 'Arial', sans-serif;
         }
 
         .game-container {
@@ -26,8 +29,8 @@
             background-color: #000;
             border: 2px solid #444;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-            width: 90vw;
-            height: calc(90vw * 0.75); /* Mantener relación de aspecto 4:3 */
+            width: 95vw;
+            height: calc(95vw * 0.75); /* Mantener relación de aspecto 4:3 */
             max-width: calc(100vh * 1.333); /* Máximo basado en altura */
             max-height: 90vh;
         }
@@ -53,10 +56,10 @@
         h1 {
             color: #0ff;
             text-align: center;
-            font-family: 'Arial', sans-serif;
-            font-size: 36px;
+            font-size: 28px;
             text-shadow: 0 0 10px #0ff;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            padding: 0 10px;
         }
 
         /* Estilos para la pantalla de inicio */
@@ -74,27 +77,27 @@
             align-items: center;
             text-align: center;
             z-index: 1001;
-            font-family: 'Arial', sans-serif;
+            padding: 20px;
             cursor: pointer;
         }
 
         #splash-screen h2 {
             color: #0ff;
-            font-size: 4em;
-            margin-bottom: 20px;
+            font-size: 3em;
+            margin-bottom: 15px;
             text-shadow: 0 0 15px #0ff;
         }
 
         #splash-screen p {
-            font-size: 1.5em;
+            font-size: 1.2em;
             margin: 5px 0;
             color: #eee;
-            max-width: 70%;
+            max-width: 90%;
         }
 
         #splash-screen .click-to-start {
-            margin-top: 40px;
-            font-size: 2em;
+            margin-top: 30px;
+            font-size: 1.8em;
             color: #ff0;
             text-shadow: 0 0 10px #ff0;
             animation: pulse 1.5s infinite alternate;
@@ -114,36 +117,110 @@
             justify-content: center;
             align-items: center;
             z-index: 1002;
-            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            text-align: center;
         }
 
         #pause-screen h2 {
-            font-size: 3em;
-            margin-bottom: 20px;
+            font-size: 2.5em;
+            margin-bottom: 15px;
             text-shadow: 0 0 10px #0ff;
         }
 
         #pause-screen p {
-            font-size: 1.5em;
-            margin: 10px 0;
+            font-size: 1.3em;
+            margin: 8px 0;
         }
+
+        /* Tooltip para las habilidades */
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #0ff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1003;
+            display: none;
+            text-align: center;
+            max-width: 200px;
+            border: 1px solid #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        /* Indicador de baterías */
+        .battery-indicators {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 10px;
+            padding: 0 10px;
+        }
+        
+        .battery-indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #0ff;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0ff;
+        }
+        
+        .battery-icon {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 5px;
+            background-color: #333;
+            border: 1px solid #0ff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .battery-1 .battery-icon { background: linear-gradient(to bottom, #ffff00, #888800); }
+        .battery-2 .battery-icon { background: linear-gradient(to bottom, #ff9900, #885500); }
+        .battery-3 .battery-icon { background: linear-gradient(to bottom, #00ff00, #008800); }
 
         @keyframes pulse {
             from { opacity: 1; }
             to { opacity: 0.5; }
         }
         
-        /* Tooltip para las habilidades */
-        .tooltip {
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #0ff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 14px;
-            pointer-events: none;
-            z-index: 1003;
-            display: none;
+        /* Botones para móviles */
+        .mobile-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 100, 255, 0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(0, 200, 255, 0.9);
+            transform: scale(0.95);
+        }
+        
+        .pause-btn {
+            background: rgba(200, 0, 0, 0.7);
         }
     </style>
 </head>
@@ -155,33 +232,54 @@
             <div class="crosshair"></div>
             <div class="tooltip" id="battery-tooltip"></div>
             
+            <div class="battery-indicators">
+                <div class="battery-indicator battery-1">
+                    <div class="battery-icon">I</div>
+                    <div>Immunity</div>
+                </div>
+                <div class="battery-indicator battery-2">
+                    <div class="battery-icon">B</div>
+                    <div>Boost</div>
+                </div>
+                <div class="battery-indicator battery-3">
+                    <div class="battery-icon">L</div>
+                    <div>Laser</div>
+                </div>
+            </div>
+            
+            <div class="mobile-controls">
+                <div class="mobile-btn pause-btn" id="pause-btn">⏸</div>
+                <div class="mobile-btn" id="immunity-btn">I</div>
+                <div class="mobile-btn" id="boost-btn">B</div>
+                <div class="mobile-btn" id="laser-btn">L</div>
+            </div>
+            
             <div id="splash-screen">
                 <h2>Iron Dome Enhanced</h2>
                 <p>Defend your cities from the enemy missile rain!</p>
-                <p>Move the mouse to aim and click to launch a defensive missile.</p>
-                <p>Each battery has limited missiles, use them strategically!</p>
-                <p>Press 'P' to pause the game.</p>
-                <p>Double-click on batteries to activate special abilities:</p>
-                <p>- Left Battery: City Immunity (3 waves)</p>
-                <p>- Middle Battery: Double Explosion Radius (5 waves)</p>
-                <p>- Right Battery: Iron Beam Laser (7 waves)</p>
-                <p class="click-to-start">Click anywhere to start</p>
+                <p>Tap to aim and tap to launch a defensive missile.</p>
+                <p>Double-tap on batteries to activate special abilities:</p>
+                <p>- Immunity: Protect cities for 3 waves</p>
+                <p>- Boost: Double explosion radius for 5 waves</p>
+                <p>- Laser: Activate Iron Beam for 7 waves</p>
+                <p class="click-to-start">Tap anywhere to start</p>
             </div>
 
             <div id="pause-screen">
                 <h2>GAME PAUSED</h2>
-                <p>Press 'P' to resume</p>
+                <p>Tap Resume to continue</p>
                 <p>Controls:</p>
-                <p>Double-click batteries for special abilities:</p>
-                <p>Left - City Immunity (3 waves)</p>
-                <p>Middle - Double Explosion Radius (5 waves)</p>
-                <p>Right - Iron Beam Laser (7 waves)</p>
+                <p>Double-tap batteries for special abilities:</p>
+                <p>Immunity (I) - City protection (3 waves)</p>
+                <p>Boost (B) - Double explosion radius (5 waves)</p>
+                <p>Laser (L) - Iron Beam activation (7 waves)</p>
+                <div class="mobile-btn" id="resume-btn" style="margin-top: 20px;">Resume</div>
             </div>
         </div>
     </div>
 
     <script>
-        // Iron Dome Enhanced
+        // Iron Dome Enhanced - Mobile Version
         const missileCommand = (function() {
             const canvas = document.querySelector('canvas');
             const ctx = canvas.getContext('2d');
@@ -190,6 +288,11 @@
             const splashScreen = document.getElementById('splash-screen');
             const pauseScreen = document.getElementById('pause-screen');
             const tooltip = document.getElementById('battery-tooltip');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resumeBtn = document.getElementById('resume-btn');
+            const immunityBtn = document.getElementById('immunity-btn');
+            const boostBtn = document.getElementById('boost-btn');
+            const laserBtn = document.getElementById('laser-btn');
 
             // Variables para dimensiones dinámicas
             let CANVAS_WIDTH = 800;
@@ -226,11 +329,6 @@
             // Escalar una posición vertical
             function scaleY(y) {
                 return y * (CANVAS_HEIGHT / 600);
-            }
-
-            // Escalar dimensiones (ancho y alto)
-            function scaleDimensions(width, height) {
-                return [width * (CANVAS_WIDTH / 800), height * (CANVAS_HEIGHT / 600)];
             }
 
             // Constants
@@ -306,9 +404,10 @@
             let lastBeamActivationTime = 0;
             const BEAM_COOLDOWN = 1000; // 1 segundo entre activaciones
             
-            // Variables para el doble clic
-            let lastClickTime = 0;
-            let clickCount = 0;
+            // Variables para el doble toque
+            let lastTapTime = 0;
+            let tapCount = 0;
+            let lastTappedBattery = -1;
 
             // Initialize game
             function initialize() {
@@ -400,52 +499,86 @@
 
             // Setup event listeners
             function setupListeners() {
-                splashScreen.addEventListener('click', () => {
-                    if (!gameStarted) {
-                        splashScreen.style.display = 'none';
-                        gameStarted = true;
-                        initializeLevel();
-                        gameContainer.addEventListener('click', handleClick);
-                        gameContainer.addEventListener('mousemove', handleMouseMove);
-                        crosshair.style.display = 'block';
-                    }
-                });
-                document.addEventListener('keydown', handleKeyPress);
+                splashScreen.addEventListener('click', startGame);
+                splashScreen.addEventListener('touchend', startGame);
+                
+                gameContainer.addEventListener('click', handleTap);
+                gameContainer.addEventListener('touchend', handleTap);
+                
+                gameContainer.addEventListener('mousemove', handleMouseMove);
+                gameContainer.addEventListener('touchmove', handleTouchMove);
+                
+                pauseBtn.addEventListener('click', togglePause);
+                pauseBtn.addEventListener('touchend', togglePause);
+                
+                resumeBtn.addEventListener('click', togglePause);
+                resumeBtn.addEventListener('touchend', togglePause);
+                
+                immunityBtn.addEventListener('click', () => activateImmunity());
+                immunityBtn.addEventListener('touchend', () => activateImmunity());
+                
+                boostBtn.addEventListener('click', () => activateExplosionBoost());
+                boostBtn.addEventListener('touchend', () => activateExplosionBoost());
+                
+                laserBtn.addEventListener('click', () => activateIronBeam());
+                laserBtn.addEventListener('touchend', () => activateIronBeam());
+            }
+            
+            function startGame() {
+                if (!gameStarted) {
+                    splashScreen.style.display = 'none';
+                    gameStarted = true;
+                    initializeLevel();
+                    crosshair.style.display = 'block';
+                }
             }
 
-            // Handle click events (single and double)
-            function handleClick(event) {
+            // Handle tap events (single and double)
+            function handleTap(event) {
+                event.preventDefault();
                 const rect = canvas.getBoundingClientRect();
-                const canvasX = event.clientX - rect.left;
-                const canvasY = event.clientY - rect.top;
+                let clientX, clientY;
                 
-                // Check if click is on a battery
+                if (event.type === 'touchend') {
+                    if (event.changedTouches.length === 0) return;
+                    clientX = event.changedTouches[0].clientX;
+                    clientY = event.changedTouches[0].clientY;
+                } else {
+                    clientX = event.clientX;
+                    clientY = event.clientY;
+                }
+                
+                const canvasX = clientX - rect.left;
+                const canvasY = clientY - rect.top;
+                
+                // Check if tap is on a battery
                 const batteryIndex = getBatteryAtPosition(canvasX, canvasY);
                 
                 if (batteryIndex !== -1) {
                     const currentTime = new Date().getTime();
+                    const tapDelay = currentTime - lastTapTime;
                     
-                    if (currentTime - lastClickTime < 300) { // Double click
-                        clickCount = 0;
+                    if (tapDelay < 300 && batteryIndex === lastTappedBattery) {
+                        // Double tap on battery - activate ability
+                        tapCount = 0;
                         activateBatteryAbility(batteryIndex);
-                    } else { // Single click
-                        clickCount = 1;
-                    }
-                    
-                    lastClickTime = currentTime;
-                    
-                    // If it's a single click, still handle it as a normal shot
-                    if (clickCount === 1) {
+                    } else {
+                        // Single tap on battery
+                        tapCount = 1;
+                        lastTappedBattery = batteryIndex;
+                        
                         setTimeout(() => {
-                            if (clickCount === 1) {
-                                playerShoot(event.clientX, event.clientY);
-                                clickCount = 0;
+                            if (tapCount === 1) {
+                                playerShoot(clientX, clientY);
+                                tapCount = 0;
                             }
                         }, 300);
                     }
+                    
+                    lastTapTime = currentTime;
                 } else {
-                    // Handle normal click for shooting
-                    playerShoot(event.clientX, event.clientY);
+                    // Handle normal tap for shooting
+                    playerShoot(clientX, clientY);
                 }
             }
             
@@ -495,7 +628,7 @@
             function showTooltip(text, x, y) {
                 tooltip.textContent = text;
                 tooltip.style.left = `${x}px`;
-                tooltip.style.top = `${y - 30}px`;
+                tooltip.style.top = `${y - 40}px`;
                 tooltip.style.display = 'block';
                 
                 setTimeout(() => {
@@ -674,15 +807,15 @@
                 drawLevel();
                 drawPowerUpStatus();
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(300), scaleY(30));
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.fillText(`Wave: ${currentWave}/${WAVES_PER_LEVEL}`, CANVAS_WIDTH - scaleX(250), scaleY(30));
                 updateCrosshairPosition();
             }
 
             // Draw power-up status
             function drawPowerUpStatus() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(16)}px Arial`;
+                ctx.font = `bold ${scaleValue(14)}px Arial`;
                 
                 if (immunityActive) {
                     ctx.fillText(`Immunity: ${immunityWavesLeft} waves`, scaleX(20), scaleY(60));
@@ -718,15 +851,15 @@
                 ctx.fillRect(scaleX(100), scaleY(150), scaleX(600), scaleY(300));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.font = `bold ${scaleValue(25)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText('DEFEND YOUR CITIES', CANVAS_WIDTH / 2, scaleY(200));
                 
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
                 ctx.fillText(`LEVEL ${level}`, CANVAS_WIDTH / 2, scaleY(250));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('CLICK TO START', CANVAS_WIDTH / 2, scaleY(350));
+                ctx.fillText('TAP TO START', CANVAS_WIDTH / 2, scaleY(350));
                 
                 ctx.textAlign = 'left';
             }
@@ -734,15 +867,15 @@
             // Draw score
             function drawScore() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Score: ${score}`, scaleX(70), scaleY(30));
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.fillText(`Score: ${score}`, scaleX(50), scaleY(30));
             }
 
             // Draw level
             function drawLevel() {
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(24)}px Arial`;
-                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(150), scaleY(30));
+                ctx.font = `bold ${scaleValue(20)}px Arial`;
+                ctx.fillText(`Level: ${level}`, CANVAS_WIDTH - scaleX(120), scaleY(30));
             }
 
             // Draw end level screen
@@ -750,36 +883,36 @@
                 drawGameState();
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                ctx.fillRect(scaleX(100), scaleY(100), scaleX(600), scaleY(400));
+                ctx.fillRect(scaleX(50), scaleY(80), CANVAS_WIDTH - scaleX(100), scaleY(350));
                 
                 ctx.fillStyle = '#0ff';
-                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.font = `bold ${scaleValue(25)}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(150));
+                ctx.fillText('LEVEL COMPLETE!', CANVAS_WIDTH / 2, scaleY(130));
                 
-                ctx.font = `bold ${scaleValue(20)}px Arial`;
-                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(180));
-                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(210));
-                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(240));
-                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(270));
+                ctx.font = `bold ${scaleValue(18)}px Arial`;
+                ctx.fillText(`Missiles Left: ${missilesLeft} (Bonus: ${missilesBonus})`, CANVAS_WIDTH / 2, scaleY(160));
+                ctx.fillText(`Cities Saved: ${citiesSaved} (Bonus: ${citiesBonus})`, CANVAS_WIDTH / 2, scaleY(190));
+                ctx.fillText(`Planes Shot Down: ${planesShotDown}`, CANVAS_WIDTH / 2, scaleY(220));
+                ctx.fillText(`Structures Rebuilt: ${reconstructedCount}`, CANVAS_WIDTH / 2, scaleY(250));
                 if (spyPlaneBonus > 0) {
-                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus} Misiles/Oleada!`, CANVAS_WIDTH / 2, scaleY(300));
+                    ctx.fillText(`Spy Plane Bonuses: +${spyPlaneBonus}`, CANVAS_WIDTH / 2, scaleY(280));
                 }
                 if (stealthPlaneBonusActive) {
-                    ctx.fillText(`Stealth Plane Bonus: Double Explosion Radius!`, CANVAS_WIDTH / 2, scaleY(330));
+                    ctx.fillText(`Stealth Plane Bonus: Double Radius!`, CANVAS_WIDTH / 2, scaleY(310));
                 }
                 if (cargoPlaneMissileReduction > 0) {
-                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction} Enemy Missiles/Wave!`, CANVAS_WIDTH / 2, scaleY(360));
+                    ctx.fillText(`Cargo Plane Bonus: -${cargoPlaneEnemyMissileReduction}`, CANVAS_WIDTH / 2, scaleY(340));
                 }
                 if (killerPlaneImmunityActive) {
-                    ctx.fillText(`Killer Plane Bonus: City Immunity!`, CANVAS_WIDTH / 2, scaleY(390));
+                    ctx.fillText(`Killer Plane Bonus: Immunity!`, CANVAS_WIDTH / 2, scaleY(370));
                 }
                 if (ironBeamActive) {
-                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft} waves left!`, CANVAS_WIDTH / 2, scaleY(420));
+                    ctx.fillText(`Iron Beam Active: ${ironBeamWavesLeft}`, CANVAS_WIDTH / 2, scaleY(400));
                 }
 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(450));
+                ctx.fillText('Preparing next level...', CANVAS_WIDTH / 2, scaleY(430));
                 
                 ctx.textAlign = 'left';
             }
@@ -790,15 +923,15 @@
                 ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
                 
                 ctx.fillStyle = '#fff';
-                ctx.font = `bold ${scaleValue(40)}px Arial`;
+                ctx.font = `bold ${scaleValue(35)}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - scaleY(40));
                 
-                ctx.font = `bold ${scaleValue(30)}px Arial`;
+                ctx.font = `bold ${scaleValue(25)}px Arial`;
                 ctx.fillText(`Final Score: ${score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(20));
                 
                 ctx.fillStyle = '#ff0';
-                ctx.fillText('CLICK TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
+                ctx.fillText('TAP TO PLAY AGAIN', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + scaleY(80));
                 
                 ctx.textAlign = 'left';
             }
@@ -1174,7 +1307,7 @@
                 }
             }
 
-            // Iron Beam Laser class (Easter Egg)
+            // Iron Beam Laser class
             class IronBeamLaser {
                 constructor(x, y) {
                     this.x = x;
@@ -1407,7 +1540,6 @@
                                     if (targetBattery.health <= 0) {
                                         targetBattery.active = false;
                                         targetBattery.missilesLeft = 0;
-                                        console.log('Battery destroyed!');
                                     }
                                 }
                             }
@@ -1465,12 +1597,12 @@
             }
 
             // Player shoot function
-            function playerShoot(x, y) {
+            function playerShoot(clientX, clientY) {
                 if (gamePaused) return;
                 
                 const rect = canvas.getBoundingClientRect();
-                const canvasX = x - rect.left;
-                const canvasY = y - rect.top;
+                const canvasX = clientX - rect.left;
+                const canvasY = clientY - rect.top;
 
                 if(canvasY >= scaleY(50) && canvasY <= CANVAS_HEIGHT - GROUND_HEIGHT - scaleY(50)) {
                     const source = whichAntiMissileBattery(canvasX);
@@ -1743,7 +1875,6 @@
                     score += 750 * getMultiplier();
                     spyPlaneWaveMissileBonus += 2;
                     extraMissilesFromSpyPlane += 2;
-                    console.log(`Spy Plane shot down! Missile bonus per wave increased by 2. Total bonus: ${spyPlaneWaveMissileBonus}`);
                 }
             }
 
@@ -1836,7 +1967,6 @@
                     this.exploded = true;
                     score += 1000 * getMultiplier();
                     stealthPlaneExplosionBonus = 2;
-                    console.log(`Stealth Plane shot down! Missile explosion radius doubled!`);
                 }
             }
 
@@ -1937,7 +2067,6 @@
                     this.exploded = true;
                     score += 1200 * getMultiplier();
                     cargoPlaneEnemyMissileReduction = Math.min(2 * level, cargoPlaneEnemyMissileReduction + 2); 
-                    console.log(`Cargo Plane shot down! Enemy missiles per wave reduced by 2 for the rest of the level!`);
                 }
             }
 
@@ -2049,7 +2178,6 @@
                     this.exploded = true;
                     score += 2000 * getMultiplier();
                     citiesImmune = true;
-                    console.log(`Killer Plane shot down! Cities are now immune for this wave!`);
                 }
             }
 
@@ -2149,13 +2277,11 @@
                     if (structureToRebuild instanceof City) {
                         structureToRebuild.active = true;
                         reconstructedCount++;
-                        console.log("¡Ciudad reconstruida por derribar 3 aviones!");
                     } else if (structureToRebuild instanceof AntiMissileBattery) {
                         structureToRebuild.active = true;
                         structureToRebuild.health = 3;
                         structureToRebuild.missilesLeft = 10;
                         reconstructedCount++;
-                        console.log("¡Lanzadera reconstruida por derribar 3 aviones!");
                     }
                 }
             }
@@ -2297,7 +2423,6 @@
                         setTimeout(() => {
                             enemyPlane = new EnemyPlane();
                             planesPerLevel++;
-                            console.log(`Enemy plane appearing. Planes this level: ${planesPerLevel}`);
                         }, rand(2000, 5000));
                     }
                 }
@@ -2310,7 +2435,6 @@
                         setTimeout(() => {
                             spyPlane = new SpyPlane();
                             spyPlanesAppearedThisLevel++;
-                            console.log(`Spy plane appearing! Spy planes this level: ${spyPlanesAppearedThisLevel}`);
                         }, rand(4000, 8000));
                     }
                 }
@@ -2323,7 +2447,6 @@
                         setTimeout(() => {
                             stealthPlane = new StealthPlane();
                             stealthPlaneSpawnedThisLevel = true;
-                            console.log(`Stealth plane appearing in Wave ${currentWave}!`);
                         }, rand(4000, 7000)); 
                     }
                 }
@@ -2336,7 +2459,6 @@
                         setTimeout(() => {
                             cargoPlane = new CargoPlane();
                             cargoPlaneSpawnedThisLevel = true;
-                            console.log(`Cargo plane appearing in Wave ${currentWave}!`);
                         }, rand(5000, 9000)); 
                     }
                 }
@@ -2349,7 +2471,6 @@
                         setTimeout(() => {
                             killerPlane = new KillerPlane();
                             killerPlaneSpawnedThisLevel = true;
-                            console.log(`Killer plane appearing in Wave ${currentWave}!`);
                         }, rand(6000, 10000)); 
                     }
                 }
@@ -2365,8 +2486,8 @@
                     (!killerPlane || !killerPlane.active && !killerPlane.exploded)
                 ) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleClick);
-                    gameContainer.removeEventListener('mousemove', handleMouseMove);
+                    gameContainer.removeEventListener('click', handleTap);
+                    gameContainer.removeEventListener('touchend', handleTap);
                     crosshair.style.display = 'none';
                     
                     const missilesLeft = totalMissilesLeft();
@@ -2384,8 +2505,8 @@
             function checkAllCitiesDestroyed() {
                 if (totalCitiesSaved() === 0) {
                     stopLevel();
-                    gameContainer.removeEventListener('click', handleClick);
-                    gameContainer.removeEventListener('mousemove', handleMouseMove);
+                    gameContainer.removeEventListener('click', handleTap);
+                    gameContainer.removeEventListener('touchend', handleTap);
                     crosshair.style.display = 'none';
                     endGame(totalMissilesLeft());
                 }
@@ -2439,7 +2560,6 @@
                 // LEVEL 1 TO 2 REWARD LOGIC
                 if (level === 2 && totalCitiesSaved() === 6) {
                     bonusMissilesForNextWave = 10; 
-                    console.log("10 extra missiles per battery for Level 2 for saving all cities!"); 
                 }
 
                 // NEW LOGIC: Rebuild a city if level score was > 3000
@@ -2449,7 +2569,6 @@
                         const cityToRebuild = destroyedCities[rand(0, destroyedCities.length - 1)];
                         cityToRebuild.active = true;
                         reconstructedCount++;
-                        console.log("City rebuilt due to high score!"); 
                     }
                 }
 
@@ -2458,11 +2577,10 @@
                     amb.active = true;
                     amb.health = 3;
                 });
-                console.log("Launchers rebuilt and repaired!"); 
 
                 initializeLevel(); 
-                gameContainer.addEventListener('click', handleClick);
-                gameContainer.addEventListener('mousemove', handleMouseMove);
+                gameContainer.addEventListener('click', handleTap);
+                gameContainer.addEventListener('touchend', handleTap);
                 crosshair.style.display = 'block';
             }
 
@@ -2473,10 +2591,12 @@
                 
                 const resetGame = () => {
                     document.removeEventListener('click', resetGame);
+                    document.removeEventListener('touchend', resetGame);
                     location.reload(); 
                 };
                 
                 document.addEventListener('click', resetGame);
+                document.addEventListener('touchend', resetGame);
             }
 
             // Get total missiles left
@@ -2557,6 +2677,17 @@
                 targetCrosshairX = event.clientX - rect.left;
                 targetCrosshairY = event.clientY - rect.top;
             }
+            
+            // Handle touch move
+            function handleTouchMove(event) {
+                event.preventDefault();
+                if (event.touches.length > 0) {
+                    const touch = event.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    targetCrosshairX = touch.clientX - rect.left;
+                    targetCrosshairY = touch.clientY - rect.top;
+                }
+            }
 
             // Toggle pause function
             function togglePause() {
@@ -2577,9 +2708,9 @@
                     immunityWavesLeft = 3;
                     citiesImmune = true;
                     powerUpUsedThisLevel.immunity = true;
-                    console.log("City immunity activated for 3 waves!");
+                    showTooltip("Immunity activated! (3 waves)", scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 } else {
-                    console.log("Immunity power-up already used this level!");
+                    showTooltip("Immunity already used!", scaleX(50), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 }
             }
 
@@ -2590,25 +2721,13 @@
                     explosionBoostWavesLeft = 5;
                     stealthPlaneExplosionBonus = 2;
                     powerUpUsedThisLevel.explosion = true;
-                    console.log("Explosion radius doubled for 5 waves!");
+                    showTooltip("Explosion boost activated! (5 waves)", scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 } else {
-                    console.log("Explosion boost power-up already used this level!");
-                }
-            }
-
-            // Activate enemy reduction power-up
-            function activateEnemyReduction() {
-                if (!powerUpUsedThisLevel.reduction) {
-                    enemyReductionActive = true;
-                    enemyReductionWavesLeft = 4;
-                    powerUpUsedThisLevel.reduction = true;
-                    console.log("Enemy missiles reduced by 4 for 4 waves!");
-                } else {
-                    console.log("Enemy reduction power-up already used this level!");
+                    showTooltip("Boost already used!", scaleX(400), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 }
             }
             
-            // Activate Iron Beam Laser (Easter Egg)
+            // Activate Iron Beam Laser
             function activateIronBeam() {
                 if (!ironBeamActive) {
                     ironBeamActive = true;
@@ -2617,16 +2736,9 @@
                         new IronBeamLaser(scaleX(350), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT)),
                         new IronBeamLaser(scaleX(450), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT))
                     ];
-                    console.log("Iron Beam Laser activated for 7 waves!");
+                    showTooltip("Iron Beam activated! (7 waves)", scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 } else {
-                    console.log("Iron Beam Laser is already active!");
-                }
-            }
-
-            // Handle key press for sound toggle and other functions
-            function handleKeyPress(event) {
-                if (event.key === 'p' || event.key === 'P') {
-                    togglePause();
+                    showTooltip("Laser already active!", scaleX(750), scaleY(CANVAS_HEIGHT - GROUND_HEIGHT));
                 }
             }
 
